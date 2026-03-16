@@ -6,7 +6,7 @@ from calculators import calculate_severance, calculate_leave, calculate_unpaid_w
 client = anthropic.Anthropic(api_key=os.environ.get("ANTHROPIC_API_KEY"))
 
 MAX_TURNS = 20
-MAX_INPUT_LENGTH = 500
+MAX_INPUT_LENGTH = 1000
 
 SYSTEM_PROMPT = """คุณเป็นผู้เชี่ยวชาญด้านกฎหมายแรงงานไทย ช่วยเหลือแรงงานที่มีปัญหา
 
