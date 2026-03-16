@@ -1,0 +1,10 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(powershell.exe -Command \"Get-ChildItem C:\\\\Users\\\\terryn\\\\ai-labor-advisor | Select-Object Name\")",
+      "Bash(cp \"c:/Users/terryn/OneDrive - NEXON COMPANY/바탕 화면/수정/app.py\" \"c:/Users/terryn/ai-labor-advisor/app.py\")",
+      "Bash(cp \"c:/Users/terryn/OneDrive - NEXON COMPANY/바탕 화면/수정/render.yaml\" \"c:/Users/terryn/ai-labor-advisor/render.yaml\")",
+      "Bash(cp \"c:/Users/terryn/OneDrive - NEXON COMPANY/바탕 화면/수정/requirements.txt\" \"c:/Users/terryn/ai-labor-advisor/requirements.txt\")"
+    ]
+  }
+}

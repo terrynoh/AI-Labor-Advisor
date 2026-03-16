@@ -1,0 +1,11 @@
+services:
+  - type: web
+    name: ai-labor-advisor
+    runtime: python
+    buildCommand: "apt-get update && apt-get install -y libreoffice && pip install -r requirements.txt"
+    startCommand: "python app.py"
+    envVars:
+      - key: ANTHROPIC_API_KEY
+        sync: false
+      - key: SECRET_KEY
+        sync: false
