@@ -101,12 +101,16 @@ def line_webhook():
 
     print("🔥 LINE BODY:", body)
 
+    # 🔥 Verify 요청 우회 처리
+    if not signature:
+        return "OK", 200
+
     if not verify_signature(body, signature):
         return "Invalid signature", 400
 
     handle_message(body)
 
-    return "OK"
+    return "OK", 200
 
 @app.route("/reset", methods=["POST"])
 def reset():
