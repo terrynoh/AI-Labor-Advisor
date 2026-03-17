@@ -6,7 +6,7 @@ from chatbot import chat, get_initial_message, analyze_situation
 from calculators import calculate_severance, calculate_leave
 from pdf_generator import generate_kor7_pdf, generate_demand_letter_pdf
 from chatbot import generate_demand_letter_body
-
+from line_bot import handle_message, verify_signature
 app = Flask(__name__)
 app.secret_key = os.environ.get("SECRET_KEY", "dev-secret-key")
 
@@ -94,6 +94,19 @@ def chat_endpoint():
         "turns_left": 20 - turn_count
     })
 
+@app.route("/webhook/line", methods=["POST"])
+def line_webhook():
+    signature = request.headers.get("X-Line-Signature", "")
+    body = request.get_data(as_text=True)
+
+    print("🔥 LINE BODY:", body)
+
+    if not verify_signature(body, signature):
+        return "Invalid signature", 400
+
+    handle_message(body)
+
+    return "OK"
 
 @app.route("/reset", methods=["POST"])
 def reset():
@@ -265,7 +278,8 @@ def generate_package():
     except Exception as e:
         print(f"[generate_package ERROR] {e}")
         return jsonify({"error": str(e)}), 500
-
+    
+    'app_line-addition.py'
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))

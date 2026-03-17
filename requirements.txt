@@ -2,3 +2,4 @@ flask
 anthropic
 python-docx
 gunicorn
+requests
