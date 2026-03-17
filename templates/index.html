@@ -945,13 +945,21 @@
             <div id="warningBox"></div>
         </div>
 
-        <!-- Petition question -->
+        <!-- Package offer -->
         <div class="question-card" id="petitionQuestion">
-            <h3>📋 ต้องการยื่นคำร้องต่อกรมฯ หรือไม่?</h3>
-            <p>น้องช้างสามารถช่วยกรอกแบบฟอร์ม คร.7<br>เพื่อยื่นที่กรมสวัสดิการและคุ้มครองแรงงานได้ครับ</p>
+            <h3>📦 ต้องการให้น้องช้างเตรียมเอกสารทั้งหมดให้ไหมครับ?</h3>
+            <p style="margin-bottom:14px;font-size:13px;color:#374151;line-height:1.7">
+                น้องช้างจะจัดทำ <strong>แพ็กเกจเอกสารฉบับเต็ม</strong> ให้คุณนำไปใช้ได้เลยครับ
+            </p>
+            <div style="background:white;border-radius:10px;padding:12px 14px;margin-bottom:16px;text-align:left">
+                <div style="font-size:12.5px;color:#374151;display:flex;flex-direction:column;gap:7px">
+                    <div>✅ &nbsp;<strong>หนังสือบอกกล่าวทวงถาม</strong> — ส่งถึงนายจ้างก่อนฟ้อง</div>
+                    <div>✅ &nbsp;<strong>แบบฟอร์ม คร.7</strong> — ยื่นกรมสวัสดิการและคุ้มครองแรงงาน</div>
+                </div>
+            </div>
             <div class="btn-row">
-                <button class="btn-danger" onclick="answerNo()">❌ ไม่ต้องการ</button>
-                <button class="btn-primary" style="flex:1" onclick="answerYes()">✅ ต้องการยื่นคำร้อง</button>
+                <button class="btn-danger" onclick="answerNo()">ไม่ต้องการ</button>
+                <button class="btn-primary" style="flex:1" onclick="answerYes()">📦 ต้องการแพ็กเกจเอกสาร</button>
             </div>
         </div>
     </div>
@@ -963,8 +971,8 @@
     <div class="step-view" id="step3">
 
         <div class="petition-note">
-            📌 กรอกข้อมูลเพิ่มเติมด้านล่างเพื่อสร้างแบบฟอร์มคำร้อง คร.7<br>
-            ข้อมูลส่วนตัวที่กรอกไว้แล้วในขั้นตอนที่ 1 จะถูกนำมาใช้โดยอัตโนมัติครับ
+            📌 กรอกข้อมูลเพิ่มเติมด้านล่าง น้องช้างจะสร้าง <strong>2 เอกสาร</strong> ให้คุณในไฟล์ ZIP เดียวครับ<br>
+            ① หนังสือบอกกล่าวทวงถาม &nbsp;② แบบฟอร์ม คร.7
         </div>
 
         <!-- Complainant Details -->
@@ -1052,7 +1060,7 @@
         </div>
 
         <button class="btn-primary" onclick="generatePdf()" id="pdfBtn">
-            📄 สร้างแบบฟอร์ม คร.7
+            📦 สร้างแพ็กเกจเอกสาร (ZIP)
         </button>
         <div class="btn-row" style="margin-top:10px">
             <button class="btn-secondary" onclick="goBack()">← ย้อนกลับ</button>
@@ -1276,36 +1284,42 @@
             }
         }
 
-        const petitionData = {
-            complainant_name:    step1Data.name || "",
-            age:                 step1Data.age  || "",
-            address:             document.getElementById("p_address").value,
-            province:            document.getElementById("p_province").value,
-            phone:               document.getElementById("p_phone").value,
-            birthdate:           document.getElementById("p_birthdate").value,
-            position:            document.getElementById("p_position").value,
-            employer_name:       document.getElementById("p_employer_name").value,
-            business_type:       document.getElementById("p_business_type").value,
-            employer_province:   document.getElementById("p_employer_province").value,
-            employer_address:    document.getElementById("p_employer_address").value,
-            employer_person:     document.getElementById("p_employer_person").value,
-            start_date:          document.getElementById("p_start_date").value,
-            end_date:            document.getElementById("p_end_date").value,
-            wage_rate:           step1Data.monthly_salary || "",
-            reason:              document.getElementById("p_reason").value,
-            filed_province:      document.getElementById("p_filed_province").value,
-            severance:           analysisResult.severance_amount || "",
+        const caseData = {
+            complainant_name:  step1Data.name || "",
+            age:               step1Data.age  || "",
+            address:           document.getElementById("p_address").value,
+            province:          document.getElementById("p_province").value,
+            phone:             document.getElementById("p_phone").value,
+            position:          document.getElementById("p_position").value,
+            employer_name:     document.getElementById("p_employer_name").value,
+            employer_address:  document.getElementById("p_employer_address").value,
+            employer_province: document.getElementById("p_employer_province").value,
+            employer_person:   document.getElementById("p_employer_person").value,
+            business_type:     document.getElementById("p_business_type").value,
+            start_date:        document.getElementById("p_start_date").value,
+            end_date:          document.getElementById("p_end_date").value,
+            wage_rate:         step1Data.monthly_salary || "",
+            reason:            document.getElementById("p_reason").value,
+            filed_province:    document.getElementById("p_filed_province").value,
+            issues:            Array.from(selectedIssues),
+            severance_amount:  analysisResult.severance_amount || 0,
+            leave_payout:      analysisResult.leave_payout || 0,
+            notice_pay:        analysisResult.notice_pay || 0,
+            wage_owed:         analysisResult.wage_owed || 0,
+            ot_amount:         analysisResult.ot_amount || 0,
+            total_amount:      (analysisResult.severance_amount || 0) + (analysisResult.leave_payout || 0),
+            deadline:          15,
         };
 
         const btn = document.getElementById("pdfBtn");
         btn.disabled = true;
-        btn.textContent = "⏳ กำลังสร้าง PDF...";
+        btn.textContent = "⏳ กำลังสร้างเอกสาร...";
 
         try {
-            const res = await fetch("/generate_petition_pdf", {
+            const res = await fetch("/generate-package", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify(petitionData)
+                body: JSON.stringify({ case_data: caseData })
             });
 
             if (!res.ok) {
@@ -1317,15 +1331,17 @@
             const url = URL.createObjectURL(blob);
             const a = document.createElement("a");
             a.href = url;
-            a.download = "คร.7.pdf";
+            a.download = "labor_package.zip";
             a.click();
             URL.revokeObjectURL(url);
 
+            btn.textContent = "✅ ดาวน์โหลดเรียบร้อยแล้ว!";
+            btn.style.background = "var(--green-dark)";
+
         } catch (e) {
-            alert("❌ เกิดข้อผิดพลาดในการสร้าง PDF: " + e.message);
-        } finally {
+            alert("❌ เกิดข้อผิดพลาดในการสร้างเอกสาร: " + e.message);
             btn.disabled = false;
-            btn.textContent = "📄 สร้างแบบฟอร์ม คร.7";
+            btn.textContent = "📦 สร้างแพ็กเกจเอกสาร (ZIP)";
         }
     }
 
