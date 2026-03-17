@@ -6,409 +6,194 @@
     <title>น้องช้าง — AI Labor Advisor</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&family=Noto+Sans+Thai:wght@400;500;600;700&display=swap');
-
         :root {
-            --green:       #06C755;
-            --green-dark:  #04a045;
-            --green-light: #e6faf0;
-            --green-mid:   #c3f0d6;
-            --purple:      #7c3aed;
-            --purple-light:#ede9fe;
-            --red:         #ef4444;
-            --red-light:   #fef2f2;
-            --amber:       #f59e0b;
-            --amber-light: #fffbeb;
-            --blue:        #3b82f6;
-            --blue-light:  #eff6ff;
-            --gray-50:     #f9fafb;
-            --gray-100:    #f3f4f6;
-            --gray-200:    #e5e7eb;
-            --gray-400:    #9ca3af;
-            --gray-500:    #6b7280;
-            --gray-700:    #374151;
-            --gray-900:    #111827;
-            --radius:      14px;
-            --shadow:      0 4px 24px rgba(0,0,0,0.10);
-            --shadow-sm:   0 2px 8px  rgba(0,0,0,0.08);
+            --green:#06C755; --green-dark:#04a045; --green-light:#e6faf0; --green-mid:#c3f0d6;
+            --purple:#7c3aed; --red:#ef4444; --red-light:#fef2f2;
+            --amber:#f59e0b; --amber-light:#fffbeb; --blue:#3b82f6; --blue-light:#eff6ff;
+            --gray-50:#f9fafb; --gray-100:#f3f4f6; --gray-200:#e5e7eb;
+            --gray-400:#9ca3af; --gray-500:#6b7280; --gray-700:#374151; --gray-900:#111827;
+            --radius:14px; --shadow:0 4px 24px rgba(0,0,0,0.10); --shadow-sm:0 2px 8px rgba(0,0,0,0.08);
         }
+        * { box-sizing:border-box; margin:0; padding:0; }
+        body { font-family:'Sarabun','Noto Sans Thai',sans-serif; background:#dff0e8; min-height:100vh; display:flex; flex-direction:column; max-width:560px; margin:0 auto; box-shadow:0 0 60px rgba(0,0,0,0.12); }
 
-        * { box-sizing: border-box; margin: 0; padding: 0; }
+        /* Header */
+        .header { background:var(--green); color:white; padding:14px 18px; display:flex; align-items:center; justify-content:space-between; box-shadow:0 3px 14px rgba(6,199,85,0.38); flex-shrink:0; position:sticky; top:0; z-index:100; }
+        .header-left { display:flex; align-items:center; gap:10px; }
+        .header-title { font-size:15px; font-weight:800; }
+        .header-sub { font-size:11px; opacity:.88; margin-top:1px; }
+        .reset-btn { background:rgba(255,255,255,0.2); border:1.5px solid rgba(255,255,255,0.45); color:white; padding:6px 14px; border-radius:20px; cursor:pointer; font-size:12px; font-weight:700; font-family:inherit; transition:background .2s; white-space:nowrap; }
+        .reset-btn:hover { background:rgba(255,255,255,0.35); }
 
-        body {
-            font-family: 'Sarabun', 'Noto Sans Thai', sans-serif;
-            background: #dff0e8;
-            min-height: 100vh;
-            display: flex;
-            flex-direction: column;
-            max-width: 560px;
-            margin: 0 auto;
-            box-shadow: 0 0 60px rgba(0,0,0,0.12);
-        }
+        /* Progress */
+        .progress-bar { background:white; padding:12px 16px 8px; border-bottom:1px solid var(--gray-200); flex-shrink:0; }
+        .steps-row { display:flex; align-items:center; margin-bottom:6px; }
+        .step-dot { width:26px; height:26px; border-radius:50%; background:var(--gray-200); color:var(--gray-500); font-size:11px; font-weight:700; display:flex; align-items:center; justify-content:center; flex-shrink:0; transition:all .3s; position:relative; z-index:1; }
+        .step-dot.active { background:var(--green); color:white; box-shadow:0 0 0 4px var(--green-mid); }
+        .step-dot.done { background:var(--green); color:white; }
+        .step-dot.done::after { content:"✓"; }
+        .step-dot.done span { display:none; }
+        .step-line { flex:1; height:3px; background:var(--gray-200); transition:background .4s; margin:0 -2px; }
+        .step-line.done { background:var(--green); }
+        .steps-labels { display:flex; justify-content:space-between; }
+        .step-label { font-size:9.5px; color:var(--gray-400); font-weight:500; text-align:center; flex:1; transition:color .3s; }
+        .step-label.active { color:var(--green); font-weight:700; }
+        .step-label:first-child { text-align:left; }
+        .step-label:last-child { text-align:right; }
 
-        /* ── Header ── */
-        .header {
-            background: var(--green);
-            color: white;
-            padding: 14px 18px;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            box-shadow: 0 3px 14px rgba(6,199,85,0.38);
-            flex-shrink: 0;
-            position: sticky;
-            top: 0;
-            z-index: 100;
-        }
-        .header-left { display: flex; align-items: center; gap: 10px; }
-        .header-title { font-size: 15px; font-weight: 800; letter-spacing: 0.3px; }
-        .header-sub   { font-size: 11px; opacity: .88; margin-top: 1px; }
-        .reset-btn {
-            background: rgba(255,255,255,0.2);
-            border: 1.5px solid rgba(255,255,255,0.45);
-            color: white;
-            padding: 6px 14px;
-            border-radius: 20px;
-            cursor: pointer;
-            font-size: 12px;
-            font-weight: 700;
-            font-family: inherit;
-            transition: background .2s;
-            white-space: nowrap;
-        }
-        .reset-btn:hover { background: rgba(255,255,255,0.35); }
+        /* Main */
+        .main { flex:1; overflow-y:auto; padding:20px 16px 32px; }
+        .main::-webkit-scrollbar { width:4px; }
+        .main::-webkit-scrollbar-thumb { background:#b2d8be; border-radius:4px; }
 
-        /* ── Progress Bar (5 steps) ── */
-        .progress-bar {
-            background: white;
-            padding: 12px 16px 8px;
-            border-bottom: 1px solid var(--gray-200);
-            flex-shrink: 0;
-        }
-        .steps-row {
-            display: flex;
-            align-items: center;
-            gap: 0;
-            margin-bottom: 6px;
-        }
-        .step-dot {
-            width: 26px;
-            height: 26px;
-            border-radius: 50%;
-            background: var(--gray-200);
-            color: var(--gray-500);
-            font-size: 11px;
-            font-weight: 700;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            flex-shrink: 0;
-            transition: all .3s;
-            position: relative;
-            z-index: 1;
-        }
-        .step-dot.active  { background: var(--green); color: white; box-shadow: 0 0 0 4px var(--green-mid); }
-        .step-dot.done    { background: var(--green); color: white; }
-        .step-dot.done::after { content: "✓"; }
-        .step-dot.done span  { display: none; }
-        .step-line {
-            flex: 1;
-            height: 3px;
-            background: var(--gray-200);
-            transition: background .4s;
-            margin: 0 -2px;
-        }
-        .step-line.done { background: var(--green); }
-        .steps-labels {
-            display: flex;
-            justify-content: space-between;
-        }
-        .step-label {
-            font-size: 9.5px;
-            color: var(--gray-400);
-            font-weight: 500;
-            text-align: center;
-            flex: 1;
-            transition: color .3s;
-        }
-        .step-label.active { color: var(--green); font-weight: 700; }
-        .step-label:first-child { text-align: left; }
-        .step-label:last-child  { text-align: right; }
+        /* Card */
+        .card { background:white; border-radius:var(--radius); box-shadow:var(--shadow); padding:22px 20px; margin-bottom:14px; animation:slideUp .35s ease both; }
+        @keyframes slideUp { from{opacity:0;transform:translateY(18px)} to{opacity:1;transform:translateY(0)} }
+        .card-title { font-size:14px; font-weight:700; color:var(--gray-700); margin-bottom:16px; display:flex; align-items:center; gap:6px; }
+        .card-title::before { content:''; display:inline-block; width:4px; height:16px; background:var(--green); border-radius:2px; }
 
-        /* ── Main Content ── */
-        .main {
-            flex: 1;
-            overflow-y: auto;
-            padding: 20px 16px 32px;
-            scroll-behavior: smooth;
-        }
-        .main::-webkit-scrollbar { width: 4px; }
-        .main::-webkit-scrollbar-thumb { background: #b2d8be; border-radius: 4px; }
+        /* Legal badges */
+        .legal-badges { display:flex; flex-wrap:wrap; gap:6px; margin-bottom:14px; }
+        .legal-badge { display:inline-flex; align-items:center; gap:4px; padding:4px 10px; background:#f0fdf4; border:1px solid #86efac; border-radius:20px; font-size:11.5px; color:#166534; font-weight:600; }
 
-        /* ── Card ── */
-        .card {
-            background: white;
-            border-radius: var(--radius);
-            box-shadow: var(--shadow);
-            padding: 22px 20px;
-            margin-bottom: 14px;
-            animation: slideUp .35s ease both;
-        }
-        @keyframes slideUp {
-            from { opacity: 0; transform: translateY(18px); }
-            to   { opacity: 1; transform: translateY(0); }
-        }
-        .card-title {
-            font-size: 14px;
-            font-weight: 700;
-            color: var(--gray-700);
-            margin-bottom: 16px;
-            display: flex;
-            align-items: center;
-            gap: 6px;
-        }
-        .card-title::before {
-            content: '';
-            display: inline-block;
-            width: 4px;
-            height: 16px;
-            background: var(--green);
-            border-radius: 2px;
-        }
+        /* Form */
+        .form-grid { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+        .form-grid.full { grid-template-columns:1fr; }
+        .field { display:flex; flex-direction:column; gap:5px; }
+        .field.span2 { grid-column:span 2; }
+        label { font-size:12.5px; font-weight:600; color:var(--gray-700); }
+        label .req { color:var(--red); margin-left:2px; }
+        input[type="text"],input[type="number"],select,textarea { border:1.5px solid var(--gray-200); border-radius:10px; padding:10px 13px; font-size:14px; font-family:inherit; color:var(--gray-900); background:var(--gray-50); transition:border-color .2s,background .2s,box-shadow .2s; outline:none; width:100%; }
+        input:focus,select:focus,textarea:focus { border-color:var(--green); background:white; box-shadow:0 0 0 3px rgba(6,199,85,0.12); }
+        input::placeholder,textarea::placeholder { color:var(--gray-400); }
+        .leave-row { display:flex; align-items:center; gap:8px; }
+        .leave-row span { font-size:13px; color:var(--gray-500); white-space:nowrap; }
 
-        /* ── Form elements ── */
-        .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
-        .form-grid.full { grid-template-columns: 1fr; }
-        .field { display: flex; flex-direction: column; gap: 5px; }
-        .field.span2 { grid-column: span 2; }
-        label { font-size: 12.5px; font-weight: 600; color: var(--gray-700); }
-        label .req { color: var(--red); margin-left: 2px; }
-        input[type="text"], input[type="number"], select, textarea {
-            border: 1.5px solid var(--gray-200);
-            border-radius: 10px;
-            padding: 10px 13px;
-            font-size: 14px;
-            font-family: inherit;
-            color: var(--gray-900);
-            background: var(--gray-50);
-            transition: border-color .2s, background .2s, box-shadow .2s;
-            outline: none;
-            width: 100%;
-        }
-        input:focus, select:focus, textarea:focus {
-            border-color: var(--green);
-            background: white;
-            box-shadow: 0 0 0 3px rgba(6,199,85,0.12);
-        }
-        input::placeholder, textarea::placeholder { color: var(--gray-400); }
-        .leave-row { display: flex; align-items: center; gap: 8px; }
-        .leave-row input { flex: 1; }
-        .leave-row span { font-size: 13px; color: var(--gray-500); white-space: nowrap; }
+        /* Issue chips */
+        .issues-grid { display:grid; grid-template-columns:1fr 1fr; gap:8px; }
+        .issue-chip { display:flex; align-items:center; gap:8px; padding:10px 12px; border:1.5px solid var(--gray-200); border-radius:10px; cursor:pointer; transition:all .2s; background:var(--gray-50); }
+        .issue-chip:hover { border-color:var(--green); background:var(--green-light); }
+        .issue-chip input[type="checkbox"] { display:none; }
+        .issue-chip.checked { border-color:var(--green); background:var(--green-light); }
+        .chip-icon { font-size:18px; flex-shrink:0; }
+        .chip-label { font-size:12.5px; font-weight:600; color:var(--gray-700); line-height:1.3; }
+        .issue-chip.checked .chip-label { color:var(--green-dark); }
+        .chip-check { margin-left:auto; width:18px; height:18px; border:2px solid var(--gray-300); border-radius:4px; flex-shrink:0; display:flex; align-items:center; justify-content:center; font-size:11px; color:white; transition:all .2s; }
+        .issue-chip.checked .chip-check { background:var(--green); border-color:var(--green); }
+        .issue-chip.checked .chip-check::after { content:"✓"; }
 
-        /* ── Issue Chips ── */
-        .issues-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
-        .issue-chip {
-            display: flex; align-items: center; gap: 8px;
-            padding: 10px 12px;
-            border: 1.5px solid var(--gray-200);
-            border-radius: 10px;
-            cursor: pointer;
-            transition: all .2s;
-            background: var(--gray-50);
-        }
-        .issue-chip:hover { border-color: var(--green); background: var(--green-light); }
-        .issue-chip input[type="checkbox"] { display: none; }
-        .issue-chip.checked { border-color: var(--green); background: var(--green-light); }
-        .chip-icon  { font-size: 18px; flex-shrink: 0; }
-        .chip-label { font-size: 12.5px; font-weight: 600; color: var(--gray-700); line-height: 1.3; }
-        .issue-chip.checked .chip-label { color: var(--green-dark); }
-        .chip-check {
-            margin-left: auto; width: 18px; height: 18px;
-            border: 2px solid var(--gray-300); border-radius: 4px;
-            flex-shrink: 0; display: flex; align-items: center; justify-content: center;
-            font-size: 11px; color: white; transition: all .2s;
-        }
-        .issue-chip.checked .chip-check { background: var(--green); border-color: var(--green); }
-        .issue-chip.checked .chip-check::after { content: "✓"; }
+        /* Buttons */
+        .btn-primary { width:100%; background:var(--green); color:white; border:none; padding:14px; border-radius:12px; font-size:15px; font-weight:700; font-family:inherit; cursor:pointer; transition:background .2s,transform .1s,box-shadow .2s; box-shadow:0 4px 14px rgba(6,199,85,0.38); display:flex; align-items:center; justify-content:center; gap:8px; margin-top:6px; }
+        .btn-primary:hover { background:var(--green-dark); }
+        .btn-primary:active { transform:scale(0.98); }
+        .btn-primary:disabled { background:var(--gray-300); box-shadow:none; cursor:not-allowed; }
+        .btn-secondary { flex:1; background:white; color:var(--gray-700); border:1.5px solid var(--gray-300); padding:13px; border-radius:12px; font-size:14px; font-weight:700; font-family:inherit; cursor:pointer; transition:all .2s; }
+        .btn-secondary:hover { border-color:var(--gray-400); background:var(--gray-50); }
+        .btn-danger { flex:1; background:white; color:var(--red); border:1.5px solid var(--red); padding:13px; border-radius:12px; font-size:14px; font-weight:700; font-family:inherit; cursor:pointer; transition:all .2s; }
+        .btn-danger:hover { background:var(--red-light); }
+        .btn-row { display:flex; gap:10px; margin-top:6px; }
+        .btn-pay { width:100%; background:linear-gradient(135deg,#7c3aed,#a855f7); color:white; border:none; padding:16px; border-radius:14px; font-size:16px; font-weight:800; font-family:inherit; cursor:pointer; box-shadow:0 6px 20px rgba(124,58,237,0.4); transition:transform .1s; display:flex; align-items:center; justify-content:center; gap:8px; margin-top:8px; }
+        .btn-pay:active { transform:scale(0.98); }
 
-        /* ── Buttons ── */
-        .btn-primary {
-            width: 100%; background: var(--green); color: white; border: none;
-            padding: 14px; border-radius: 12px; font-size: 15px; font-weight: 700;
-            font-family: inherit; cursor: pointer;
-            transition: background .2s, transform .1s, box-shadow .2s;
-            box-shadow: 0 4px 14px rgba(6,199,85,0.38);
-            display: flex; align-items: center; justify-content: center; gap: 8px; margin-top: 6px;
-        }
-        .btn-primary:hover   { background: var(--green-dark); }
-        .btn-primary:active  { transform: scale(0.98); }
-        .btn-primary:disabled { background: var(--gray-300); box-shadow: none; cursor: not-allowed; }
-        .btn-secondary {
-            flex: 1; background: white; color: var(--gray-700);
-            border: 1.5px solid var(--gray-300); padding: 13px; border-radius: 12px;
-            font-size: 14px; font-weight: 700; font-family: inherit; cursor: pointer; transition: all .2s;
-        }
-        .btn-secondary:hover { border-color: var(--gray-400); background: var(--gray-50); }
-        .btn-danger {
-            flex: 1; background: white; color: var(--red); border: 1.5px solid var(--red);
-            padding: 13px; border-radius: 12px; font-size: 14px; font-weight: 700;
-            font-family: inherit; cursor: pointer; transition: all .2s;
-        }
-        .btn-danger:hover { background: var(--red-light); }
-        .btn-row { display: flex; gap: 10px; margin-top: 6px; }
+        /* Loading */
+        .loading-card { background:white; border-radius:var(--radius); box-shadow:var(--shadow); padding:32px 20px; text-align:center; animation:slideUp .3s ease both; }
+        .spinner { width:44px; height:44px; border:4px solid var(--green-mid); border-top-color:var(--green); border-radius:50%; animation:spin .8s linear infinite; margin:0 auto 14px; }
+        @keyframes spin { to{transform:rotate(360deg)} }
 
-        /* ── Loading ── */
-        .loading-card {
-            background: white; border-radius: var(--radius); box-shadow: var(--shadow);
-            padding: 32px 20px; text-align: center; animation: slideUp .3s ease both;
-        }
-        .spinner {
-            width: 44px; height: 44px; border: 4px solid var(--green-mid);
-            border-top-color: var(--green); border-radius: 50%;
-            animation: spin .8s linear infinite; margin: 0 auto 14px;
-        }
-        @keyframes spin { to { transform: rotate(360deg); } }
-        .loading-card p { color: var(--gray-500); font-size: 14px; }
+        /* Amount preview (blurred) */
+        .amount-preview { background:linear-gradient(135deg,#f0fdf4,#dcfce7); border:2px solid var(--green-mid); border-radius:16px; padding:24px 20px; text-align:center; margin-bottom:14px; }
+        .amount-label { font-size:13px; color:var(--gray-500); margin-bottom:6px; }
+        .amount-big { font-size:36px; font-weight:800; color:var(--green-dark); margin-bottom:4px; }
+        .amount-sub { font-size:12px; color:var(--gray-400); }
+        .amount-locked { display:flex; flex-direction:column; gap:8px; margin-top:14px; }
+        .locked-item { display:flex; align-items:center; gap:8px; padding:10px 14px; background:white; border-radius:10px; font-size:13px; color:var(--gray-500); }
+        .locked-icon { font-size:16px; }
+        .blur-text { filter:blur(4px); user-select:none; flex:1; background:#e5e7eb; border-radius:4px; height:16px; }
 
-        /* ── Analysis Result ── */
-        .diagnosis-box {
-            background: var(--blue-light); border: 1.5px solid #bfdbfe;
-            border-radius: 12px; padding: 14px 16px; margin-bottom: 14px;
-            font-size: 14px; color: #1e40af; line-height: 1.7;
-        }
-        .urgency-badge {
-            display: inline-flex; align-items: center; gap: 5px;
-            padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: 700; margin-bottom: 10px;
-        }
-        .urgency-high   { background: var(--red-light); color: var(--red); }
-        .urgency-medium { background: var(--amber-light); color: #b45309; }
-        .urgency-low    { background: var(--green-light); color: var(--green-dark); }
-        .list-items { list-style: none; display: flex; flex-direction: column; gap: 8px; }
-        .list-items li {
-            display: flex; align-items: flex-start; gap: 9px;
-            font-size: 13.5px; color: var(--gray-700); line-height: 1.6;
-        }
-        .list-items li::before { content: "✅"; font-size: 14px; flex-shrink: 0; margin-top: 1px; }
-        .compensation-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 4px; }
-        .comp-item { background: var(--gray-50); border: 1.5px solid var(--gray-200); border-radius: 12px; padding: 12px 14px; }
-        .comp-item.highlight { background: var(--green-light); border-color: var(--green-mid); }
-        .comp-label  { font-size: 11.5px; color: var(--gray-500); font-weight: 600; margin-bottom: 4px; }
-        .comp-amount { font-size: 17px; font-weight: 800; color: var(--gray-900); }
-        .comp-amount.green { color: var(--green-dark); }
-        .comp-detail { font-size: 11px; color: var(--gray-400); margin-top: 2px; }
-        .legal-box { background: var(--purple-light); border-radius: 10px; padding: 11px 14px; font-size: 12.5px; color: #4c1d95; margin-top: 10px; }
-        .warning-box { background: var(--amber-light); border: 1.5px solid #fcd34d; border-radius: 10px; padding: 11px 14px; font-size: 12.5px; color: #92400e; margin-top: 10px; display: flex; gap: 8px; }
+        /* Compensation cards */
+        .comp-section { margin-bottom:14px; }
+        .comp-section-title { font-size:12px; font-weight:700; padding:4px 10px; border-radius:6px; display:inline-block; margin-bottom:8px; }
+        .comp-confirmed { background:#dcfce7; color:#166534; }
+        .comp-possible { background:#fef9c3; color:#854d0e; }
+        .comp-estimated { background:#f1f5f9; color:#475569; }
+        .comp-grid { display:grid; grid-template-columns:1fr 1fr; gap:8px; }
+        .comp-item { border-radius:12px; padding:12px 14px; border:1.5px solid; }
+        .comp-item.confirmed { background:#f0fdf4; border-color:#86efac; }
+        .comp-item.possible  { background:#fefce8; border-color:#fde047; }
+        .comp-item.estimated { background:var(--gray-50); border-color:var(--gray-200); }
+        .comp-label { font-size:11.5px; color:var(--gray-500); font-weight:600; margin-bottom:4px; }
+        .comp-amount { font-size:17px; font-weight:800; }
+        .comp-amount.confirmed { color:#166534; }
+        .comp-amount.possible  { color:#854d0e; }
+        .comp-amount.estimated { color:var(--gray-700); }
+        .comp-detail { font-size:11px; color:var(--gray-400); margin-top:2px; }
+        .comp-note { font-size:11px; color:var(--gray-500); margin-top:4px; font-style:italic; }
 
-        /* ── Welcome ── */
-        .welcome-wrap { display: flex; flex-direction: column; align-items: center; padding: 32px 20px 28px; animation: slideUp .4s ease both; }
-        .welcome-elephant {
-            width: 90px; height: 90px;
-            background: linear-gradient(145deg, #7c3aed, #a855f7);
-            border-radius: 50%; display: flex; align-items: center; justify-content: center;
-            box-shadow: 0 8px 28px rgba(124,58,237,0.35); margin-bottom: 20px;
-            animation: floatBob 3s ease-in-out infinite;
-        }
-        @keyframes floatBob { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-7px); } }
-        .welcome-name { font-size: 20px; font-weight: 800; color: var(--gray-900); margin-bottom: 6px; }
-        .welcome-tagline { font-size: 13.5px; color: var(--gray-500); text-align: center; line-height: 1.7; margin-bottom: 24px; max-width: 320px; }
-        .welcome-features { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; width: 100%; margin-bottom: 24px; }
-        .feat-item { background: white; border-radius: 10px; padding: 12px; font-size: 12.5px; font-weight: 600; color: var(--gray-700); display: flex; align-items: center; gap: 8px; box-shadow: var(--shadow-sm); }
-        .feat-icon { font-size: 18px; }
-        .btn-start {
-            width: 100%; background: linear-gradient(135deg, #06C755, #04a045); color: white;
-            border: none; padding: 16px; border-radius: 14px; font-size: 16px; font-weight: 800;
-            font-family: inherit; cursor: pointer; box-shadow: 0 6px 20px rgba(6,199,85,0.4);
-            transition: transform .1s; margin-bottom: 10px;
-        }
-        .btn-start:active { transform: scale(0.98); }
-        .btn-start-sub { font-size: 12px; color: var(--gray-400); text-align: center; }
+        /* Evidence */
+        .ev-item { display:flex; align-items:flex-start; gap:10px; padding:12px 13px; border:1.5px solid var(--gray-200); border-radius:9px; cursor:pointer; transition:all .2s; background:var(--gray-50); margin-bottom:8px; }
+        .ev-item:hover { border-color:var(--green); background:var(--green-light); }
+        .ev-item.checked { border-color:var(--green); background:var(--green-light); }
+        .ev-check { width:20px; height:20px; border:2px solid var(--gray-300); border-radius:5px; display:flex; align-items:center; justify-content:center; font-size:12px; color:white; transition:all .2s; flex-shrink:0; margin-top:1px; }
+        .ev-item.checked .ev-check { background:var(--green); border-color:var(--green); }
+        .ev-item.checked .ev-check::after { content:"✓"; }
+        .ev-content { flex:1; }
+        .ev-label { font-size:13.5px; font-weight:600; color:var(--gray-700); }
+        .ev-item.checked .ev-label { color:var(--green-dark); }
+        .ev-reason { font-size:11.5px; color:var(--gray-400); margin-top:2px; line-height:1.4; }
+        .ev-item.checked .ev-reason { color:#0f6e56; }
 
-        /* ── Welcome bubbles ── */
-        .welcome-bubbles { width: 100%; display: flex; flex-direction: column; gap: 10px; margin-bottom: 26px; }
-        .wb-row { display: flex; align-items: flex-end; gap: 8px; opacity: 0; animation: slideUp .35s ease forwards; }
-        .wb-row.right { flex-direction: row-reverse; }
-        .wb-row:nth-child(1) { animation-delay: .15s; }
-        .wb-row:nth-child(2) { animation-delay: .45s; }
-        .wb-row:nth-child(3) { animation-delay: .75s; }
-        .wb-avatar { width: 36px; height: 36px; border-radius: 50%; background: linear-gradient(145deg, #7c3aed, #a855f7); display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
-        .wb-bubble { max-width: 78%; padding: 11px 15px; border-radius: 18px; font-size: 14px; line-height: 1.7; white-space: pre-wrap; }
-        .wb-bubble.bot { background: white; color: var(--gray-900); border-bottom-left-radius: 4px; box-shadow: var(--shadow-sm); }
-        .wb-bubble.user { background: var(--green); color: white; border-bottom-right-radius: 4px; box-shadow: 0 2px 8px rgba(6,199,85,0.3); }
+        /* Timeline */
+        .timeline-item { display:flex; gap:12px; align-items:flex-start; padding:10px 0; border-bottom:1px solid var(--gray-100); }
+        .timeline-item:last-child { border-bottom:none; }
+        .tl-dot { width:10px; height:10px; border-radius:50%; background:var(--green); flex-shrink:0; margin-top:5px; }
+        .tl-label { font-size:13.5px; font-weight:700; color:var(--gray-900); margin-bottom:2px; }
+        .tl-date { font-size:12px; color:var(--green-dark); font-weight:600; margin-bottom:2px; }
+        .tl-desc { font-size:12px; color:var(--gray-500); line-height:1.5; }
 
-        /* ── Offer / Question card ── */
-        .offer-card {
-            background: linear-gradient(135deg, #f0fdf4, #dcfce7);
-            border: 2px solid var(--green-mid); border-radius: var(--radius);
-            padding: 22px 20px; text-align: center;
-            animation: slideUp .4s .1s ease both; opacity: 0; animation-fill-mode: forwards;
-        }
-        .offer-card h3 { font-size: 16px; font-weight: 800; color: var(--gray-900); margin-bottom: 8px; }
-        .offer-card p  { font-size: 13px; color: var(--gray-500); margin-bottom: 18px; line-height: 1.6; }
+        /* Doc status */
+        .doc-have-item,.doc-miss-item { display:flex; align-items:center; gap:8px; padding:8px 12px; border-radius:8px; font-size:13px; margin-bottom:6px; }
+        .doc-have-item { background:#f0fdf4; color:#166534; }
+        .doc-miss-item { background:#fef2f2; color:#991b1b; }
 
-        /* ── Evidence checklist ── */
-        .ev-item {
-            display: flex; align-items: center; gap: 10px;
-            padding: 10px 13px;
-            border: 1.5px solid var(--gray-200); border-radius: 9px;
-            font-size: 13.5px; color: var(--gray-700); cursor: pointer;
-            transition: all .2s; background: var(--gray-50);
-        }
-        .ev-item:hover { border-color: var(--green); background: var(--green-light); }
-        .ev-item.checked { border-color: var(--green); background: var(--green-light); color: var(--green-dark); }
-        .ev-item input[type="checkbox"] { display: none; }
-        .ev-check { width: 20px; height: 20px; border: 2px solid var(--gray-300); border-radius: 5px; display: flex; align-items: center; justify-content: center; font-size: 12px; color: white; transition: all .2s; flex-shrink: 0; }
-        .ev-item.checked .ev-check { background: var(--green); border-color: var(--green); }
-        .ev-item.checked .ev-check::after { content: "✓"; }
+        /* Welcome */
+        .welcome-wrap { display:flex; flex-direction:column; align-items:center; padding:32px 20px 28px; animation:slideUp .4s ease both; }
+        .welcome-elephant { width:90px; height:90px; background:linear-gradient(145deg,#7c3aed,#a855f7); border-radius:50%; display:flex; align-items:center; justify-content:center; box-shadow:0 8px 28px rgba(124,58,237,0.35); margin-bottom:20px; animation:floatBob 3s ease-in-out infinite; }
+        @keyframes floatBob { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-7px)} }
+        .welcome-name { font-size:20px; font-weight:800; color:var(--gray-900); margin-bottom:6px; }
+        .welcome-tagline { font-size:13.5px; color:var(--gray-500); text-align:center; line-height:1.7; margin-bottom:24px; max-width:320px; }
+        .welcome-features { display:grid; grid-template-columns:1fr 1fr; gap:8px; width:100%; margin-bottom:24px; }
+        .feat-item { background:white; border-radius:10px; padding:12px; font-size:12.5px; font-weight:600; color:var(--gray-700); display:flex; align-items:center; gap:8px; box-shadow:var(--shadow-sm); }
+        .btn-start { width:100%; background:linear-gradient(135deg,#06C755,#04a045); color:white; border:none; padding:16px; border-radius:14px; font-size:16px; font-weight:800; font-family:inherit; cursor:pointer; box-shadow:0 6px 20px rgba(6,199,85,0.4); transition:transform .1s; margin-bottom:10px; }
+        .btn-start:active { transform:scale(0.98); }
+        .btn-start-sub { font-size:12px; color:var(--gray-400); text-align:center; }
+        .wb-row { display:flex; align-items:flex-end; gap:8px; opacity:0; animation:slideUp .35s ease forwards; }
+        .wb-row.right { flex-direction:row-reverse; }
+        .wb-row:nth-child(1){animation-delay:.15s} .wb-row:nth-child(2){animation-delay:.45s} .wb-row:nth-child(3){animation-delay:.75s}
+        .wb-avatar { width:36px; height:36px; border-radius:50%; background:linear-gradient(145deg,#7c3aed,#a855f7); display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+        .wb-bubble { max-width:78%; padding:11px 15px; border-radius:18px; font-size:14px; line-height:1.7; }
+        .wb-bubble.bot { background:white; color:var(--gray-900); border-bottom-left-radius:4px; box-shadow:var(--shadow-sm); }
+        .wb-bubble.user { background:var(--green); color:white; border-bottom-right-radius:4px; }
+        .welcome-bubbles { width:100%; display:flex; flex-direction:column; gap:10px; margin-bottom:26px; }
 
-        /* ── Petition form ── */
-        .petition-note { background: var(--blue-light); border-radius: 10px; padding: 11px 14px; font-size: 12.5px; color: #1e40af; margin-bottom: 16px; line-height: 1.6; }
-
-        /* ── Done / complete ── */
-        .done-card { background: white; border-radius: var(--radius); box-shadow: var(--shadow); padding: 28px 20px; text-align: center; animation: slideUp .35s ease both; }
-        .done-icon { font-size: 48px; margin-bottom: 10px; }
-        .done-card h3 { font-size: 17px; font-weight: 800; color: var(--gray-900); margin-bottom: 8px; }
-        .done-card p  { font-size: 13.5px; color: var(--gray-500); line-height: 1.7; margin-bottom: 20px; }
-
-        /* ── Timeline ── */
-        .timeline-item { display: flex; gap: 12px; align-items: flex-start; padding: 10px 0; border-bottom: 1px solid var(--gray-100); }
-        .timeline-item:last-child { border-bottom: none; }
-        .tl-dot { width: 10px; height: 10px; border-radius: 50%; background: var(--green); flex-shrink: 0; margin-top: 5px; }
-        .tl-content { flex: 1; }
-        .tl-label { font-size: 13.5px; font-weight: 700; color: var(--gray-900); margin-bottom: 2px; }
-        .tl-date { font-size: 12px; color: var(--green-dark); font-weight: 600; margin-bottom: 2px; }
-        .tl-desc { font-size: 12px; color: var(--gray-500); line-height: 1.5; }
-
-        /* ── Step hide/show ── */
-        .step-view { display: none; }
-        .step-view.active { display: block; }
-
-        .disclaimer { font-size: 11.5px; color: var(--gray-400); text-align: center; padding: 4px 0 8px; }
+        .step-view { display:none; }
+        .step-view.active { display:block; }
+        .disclaimer { font-size:11.5px; color:var(--gray-400); text-align:center; padding:4px 0 8px; }
+        .petition-note { background:var(--blue-light); border-radius:10px; padding:11px 14px; font-size:12.5px; color:#1e40af; margin-bottom:16px; line-height:1.6; }
+        .done-card { background:white; border-radius:var(--radius); box-shadow:var(--shadow); padding:28px 20px; text-align:center; animation:slideUp .35s ease both; }
     </style>
 </head>
 <body>
 
-<!-- ── Header ── -->
+<!-- Header -->
 <div class="header">
     <div class="header-left">
-        <svg width="32" height="32" viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg">
-            <ellipse cx="9" cy="22" rx="6" ry="9" fill="#a78bfa"/>
-            <ellipse cx="39" cy="22" rx="6" ry="9" fill="#a78bfa"/>
-            <circle cx="24" cy="22" r="13" fill="#c4b5fd"/>
-            <circle cx="19" cy="19" r="2.5" fill="white"/>
-            <circle cx="29" cy="19" r="2.5" fill="white"/>
-            <circle cx="19.8" cy="19.5" r="1.3" fill="#3b0764"/>
-            <circle cx="29.8" cy="19.5" r="1.3" fill="#3b0764"/>
-            <path d="M21 30 Q18 35 20 39 Q22 42 24 39 Q23 34 22 30Z" fill="#a78bfa"/>
-            <path d="M18.5 26.5 Q24 30 29.5 26.5" stroke="#7c3aed" stroke-width="1.8" stroke-linecap="round" fill="none"/>
-        </svg>
-        <div>
-            <div class="header-title">AI Labor Advisor</div>
-            <div class="header-sub">ที่ปรึกษากฎหมายแรงงานไทย</div>
-        </div>
+        <svg width="32" height="32" viewBox="0 0 48 48"><ellipse cx="9" cy="22" rx="6" ry="9" fill="#a78bfa"/><ellipse cx="39" cy="22" rx="6" ry="9" fill="#a78bfa"/><circle cx="24" cy="22" r="13" fill="#c4b5fd"/><circle cx="19.8" cy="19.5" r="1.3" fill="#3b0764"/><circle cx="29.8" cy="19.5" r="1.3" fill="#3b0764"/><path d="M21 30 Q18 35 20 39 Q22 42 24 39 Q23 34 22 30Z" fill="#a78bfa"/></svg>
+        <div><div class="header-title">AI Labor Advisor</div><div class="header-sub">ที่ปรึกษากฎหมายแรงงานไทย</div></div>
     </div>
     <button class="reset-btn" onclick="resetAll()">🔄 เริ่มใหม่</button>
 </div>
 
-<!-- ── Progress Bar (5 steps) ── -->
+<!-- Progress (4 steps) -->
 <div class="progress-bar" id="progressBar" style="display:none">
     <div class="steps-row">
         <div class="step-dot active" id="dot1"><span>1</span></div>
@@ -418,510 +203,419 @@
         <div class="step-dot" id="dot3"><span>3</span></div>
         <div class="step-line" id="line3"></div>
         <div class="step-dot" id="dot4"><span>4</span></div>
-        <div class="step-line" id="line4"></div>
-        <div class="step-dot" id="dot5"><span>5</span></div>
     </div>
     <div class="steps-labels">
         <div class="step-label active" id="lbl1">ข้อมูล</div>
         <div class="step-label" id="lbl2">ผล</div>
         <div class="step-label" id="lbl3">เอกสาร</div>
-        <div class="step-label" id="lbl4">รายละเอียด</div>
-        <div class="step-label" id="lbl5">เสร็จ</div>
+        <div class="step-label" id="lbl4">เสร็จ</div>
     </div>
 </div>
 
-<!-- ── Main ── -->
 <div class="main" id="mainContent">
 
-    <!-- ══════ WELCOME ══════ -->
-    <div class="step-view active" id="stepWelcome">
-        <div class="welcome-wrap">
-            <div class="welcome-elephant">
-                <svg width="44" height="44" viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg">
-                    <ellipse cx="9" cy="22" rx="6" ry="9" fill="#a78bfa"/>
-                    <ellipse cx="39" cy="22" rx="6" ry="9" fill="#a78bfa"/>
-                    <circle cx="24" cy="22" r="13" fill="#c4b5fd"/>
-                    <circle cx="19" cy="19" r="2.5" fill="white"/>
-                    <circle cx="29" cy="19" r="2.5" fill="white"/>
-                    <circle cx="19.8" cy="19.5" r="1.3" fill="#3b0764"/>
-                    <circle cx="29.8" cy="19.5" r="1.3" fill="#3b0764"/>
-                    <path d="M21 30 Q18 35 20 39 Q22 42 24 39 Q23 34 22 30Z" fill="#a78bfa"/>
-                    <path d="M18.5 26.5 Q24 30 29.5 26.5" stroke="#7c3aed" stroke-width="1.8" stroke-linecap="round" fill="none"/>
-                </svg>
-            </div>
-            <div class="welcome-name">น้องช้าง 🐘</div>
-            <div class="welcome-tagline">ผู้ช่วยด้านสิทธิ์แรงงานไทย<br>วิเคราะห์สิทธิ์ คำนวณค่าชดเชย และเตรียมเอกสารฟ้องร้องให้คุณ</div>
-            <div class="welcome-bubbles">
-                <div class="wb-row">
-                    <div class="wb-avatar"><svg width="20" height="20" viewBox="0 0 48 48"><ellipse cx="9" cy="22" rx="6" ry="9" fill="#a78bfa"/><ellipse cx="39" cy="22" rx="6" ry="9" fill="#a78bfa"/><circle cx="24" cy="22" r="13" fill="#c4b5fd"/><circle cx="19.8" cy="19.5" r="1.3" fill="#3b0764"/><circle cx="29.8" cy="19.5" r="1.3" fill="#3b0764"/></svg></div>
-                    <div class="wb-bubble bot">สวัสดีครับ! ถูกเลิกจ้าง ค่าจ้างค้าง หรือถูกละเมิดสิทธิ์แรงงาน? ผมช่วยได้ครับ 💪</div>
-                </div>
-                <div class="wb-row right">
-                    <div class="wb-bubble user">โดนไล่ออกโดยไม่มีความผิด จะทำยังไงดี?</div>
-                </div>
-                <div class="wb-row">
-                    <div class="wb-avatar"><svg width="20" height="20" viewBox="0 0 48 48"><ellipse cx="9" cy="22" rx="6" ry="9" fill="#a78bfa"/><ellipse cx="39" cy="22" rx="6" ry="9" fill="#a78bfa"/><circle cx="24" cy="22" r="13" fill="#c4b5fd"/><circle cx="19.8" cy="19.5" r="1.3" fill="#3b0764"/><circle cx="29.8" cy="19.5" r="1.3" fill="#3b0764"/></svg></div>
-                    <div class="wb-bubble bot">นั่นแหละที่ผมช่วยได้! บอกข้อมูลนิดหน่อย แล้วผมจะวิเคราะห์สิทธิ์ คำนวณค่าชดเชย และเตรียมเอกสารฟ้องร้องให้ครับ 😊</div>
-                </div>
-            </div>
-            <div class="welcome-features">
-                <div class="feat-item"><span class="feat-icon">⚖️</span>วิเคราะห์สิทธิ์</div>
-                <div class="feat-item"><span class="feat-icon">💰</span>คำนวณค่าชดเชย</div>
-                <div class="feat-item"><span class="feat-icon">📋</span>เตรียมเอกสาร</div>
-                <div class="feat-item"><span class="feat-icon">🔒</span>ข้อมูลปลอดภัย</div>
-            </div>
-            <button class="btn-start" onclick="startForm()">เริ่มเลย — เช็คสิทธิ์ของฉัน →</button>
-            <p class="btn-start-sub">ใช้เวลาประมาณ 3 นาที · ฟรี · ไม่ต้องสมัครสมาชิก</p>
+<!-- WELCOME -->
+<div class="step-view active" id="stepWelcome">
+    <div class="welcome-wrap">
+        <div class="welcome-elephant">
+            <svg width="44" height="44" viewBox="0 0 48 48"><ellipse cx="9" cy="22" rx="6" ry="9" fill="#a78bfa"/><ellipse cx="39" cy="22" rx="6" ry="9" fill="#a78bfa"/><circle cx="24" cy="22" r="13" fill="#c4b5fd"/><circle cx="19.8" cy="19.5" r="1.3" fill="#3b0764"/><circle cx="29.8" cy="19.5" r="1.3" fill="#3b0764"/><path d="M21 30 Q18 35 20 39 Q22 42 24 39 Q23 34 22 30Z" fill="#a78bfa"/><path d="M18.5 26.5 Q24 30 29.5 26.5" stroke="#7c3aed" stroke-width="1.8" stroke-linecap="round" fill="none"/></svg>
         </div>
+        <div class="welcome-name">น้องช้าง 🐘</div>
+        <div class="welcome-tagline">ถูกเลิกจ้าง ค่าจ้างค้าง หรือถูกละเมิดสิทธิ์?<br><strong style="color:#111827">ใน 3 นาที รู้เลยว่าได้เงินเท่าไหร่</strong></div>
+
+        <div style="width:100%;background:white;border-radius:12px;padding:16px 18px;margin-bottom:20px;box-shadow:0 2px 8px rgba(0,0,0,0.08)">
+            <div style="display:flex;flex-direction:column;gap:8px">
+                <div style="display:flex;align-items:center;gap:8px;font-size:13.5px;color:#374151"><span style="color:var(--green);font-size:16px">✔</span> คำนวณตามกฎหมายแรงงานไทย อัตโนมัติ</div>
+                <div style="display:flex;align-items:center;gap:8px;font-size:13.5px;color:#374151"><span style="color:var(--green);font-size:16px">✔</span> สร้างเอกสารที่ใช้ยื่นสำนักงานแรงงานได้จริง</div>
+                <div style="display:flex;align-items:center;gap:8px;font-size:13.5px;color:#374151"><span style="color:var(--green);font-size:16px">✔</span> เริ่มต้นฟรี — ไม่ต้องกรอกข้อมูลส่วนตัว</div>
+            </div>
+        </div>
+
+        <div class="welcome-bubbles">
+            <div class="wb-row"><div class="wb-avatar"><svg width="20" height="20" viewBox="0 0 48 48"><circle cx="24" cy="22" r="13" fill="#c4b5fd"/><circle cx="19.8" cy="19.5" r="1.3" fill="#3b0764"/><circle cx="29.8" cy="19.5" r="1.3" fill="#3b0764"/></svg></div><div class="wb-bubble bot">สวัสดีครับ 😊 บอกสถานการณ์ให้ผมทราบ ผมจะคำนวณค่าชดเชยและสิทธิ์ที่คุณควรได้รับตามกฎหมายให้ครับ</div></div>
+            <div class="wb-row right"><div class="wb-bubble user">โดนไล่ออกกะทันหัน ไม่รู้จะทำยังไง</div></div>
+            <div class="wb-row"><div class="wb-avatar"><svg width="20" height="20" viewBox="0 0 48 48"><circle cx="24" cy="22" r="13" fill="#c4b5fd"/><circle cx="19.8" cy="19.5" r="1.3" fill="#3b0764"/><circle cx="29.8" cy="19.5" r="1.3" fill="#3b0764"/></svg></div><div class="wb-bubble bot">เข้าใจครับ ไม่ต้องกังวล 💪 กรอกข้อมูลนิดเดียว ผมจะบอกว่าคุณมีสิทธิ์รับเงินเท่าไหร่ และต้องทำอะไรบ้างครับ</div></div>
+        </div>
+
+        <button class="btn-start" onclick="startForm()">👉 ตรวจสอบสิทธิ์ของฉันตอนนี้เลย</button>
+        <p class="btn-start-sub">ใช้เวลาประมาณ 3 นาที · ฟรี · ไม่ต้องใส่เลขบัตรประชาชน</p>
     </div>
+</div>
 
-    <!-- ══════ STEP 1 — ข้อมูล + สถานการณ์ ══════ -->
-    <div class="step-view" id="step1">
-        <div class="card" style="background:linear-gradient(135deg,#f0fdf4,#dcfce7);border:1.5px solid var(--green-mid)">
-            <div style="display:flex;gap:10px;align-items:flex-start">
-                <span style="font-size:22px;flex-shrink:0">🐘</span>
-                <div style="font-size:13.5px;color:#14532d;line-height:1.75">
-                    <strong>กรอกข้อมูลให้ครบ</strong> เพื่อให้ผมวิเคราะห์สิทธิ์และคำนวณค่าชดเชยได้แม่นยำที่สุดครับ
-                </div>
-            </div>
-        </div>
-
-        <!-- ข้อมูลส่วนตัว -->
-        <div class="card">
-            <div class="card-title">ข้อมูลส่วนตัว</div>
-            <div class="form-grid">
-                <div class="field span2">
-                    <label>ชื่อ-นามสกุล <span class="req">*</span></label>
-                    <input type="text" id="f_name" placeholder="เช่น สมชาย ใจดี">
-                </div>
-                <div class="field">
-                    <label>อายุ <span class="req">*</span></label>
-                    <input type="number" id="f_age" placeholder="เช่น 32" min="15" max="80">
-                </div>
-                <div class="field">
-                    <label>รูปแบบการจ้างงาน <span class="req">*</span></label>
-                    <select id="f_employment_type">
-                        <option value="">-- เลือก --</option>
-                        <option value="พนักงานประจำ">พนักงานประจำ</option>
-                        <option value="พนักงานสัญญาจ้าง">พนักงานสัญญาจ้าง</option>
-                        <option value="พนักงานรายวัน">พนักงานรายวัน</option>
-                        <option value="พาร์ทไทม์">พาร์ทไทม์</option>
-                    </select>
-                </div>
-            </div>
-        </div>
-
-        <!-- ข้อมูลการทำงาน -->
-        <div class="card">
-            <div class="card-title">ข้อมูลการทำงาน</div>
-            <div class="form-grid">
-                <div class="field">
-                    <label>อายุงาน (ปี) <span class="req">*</span></label>
-                    <input type="number" id="f_work_years" placeholder="เช่น 2.5" min="0" step="0.1">
-                </div>
-                <div class="field">
-                    <label>ขนาดบริษัท <span class="req">*</span></label>
-                    <select id="f_company_size">
-                        <option value="">-- เลือก --</option>
-                        <option value="น้อยกว่า 5 คน">น้อยกว่า 5 คน</option>
-                        <option value="5–30 คน">5–30 คน</option>
-                        <option value="31–100 คน">31–100 คน</option>
-                        <option value="มากกว่า 100 คน">มากกว่า 100 คน</option>
-                    </select>
-                </div>
-                <div class="field">
-                    <label>เงินเดือน (บาท/เดือน) <span class="req">*</span></label>
-                    <input type="number" id="f_monthly_salary" placeholder="เช่น 20000" min="0">
-                </div>
-                <div class="field">
-                    <label>วันลาพักร้อนคงเหลือ</label>
-                    <div class="leave-row">
-                        <input type="number" id="f_unused_leave" placeholder="0" min="0" style="width:70px">
-                        <span>วัน จาก</span>
-                        <input type="number" id="f_total_leave" placeholder="0" min="0" style="width:70px">
-                        <span>วัน</span>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- ปัญหาที่พบ -->
-        <div class="card">
-            <div class="card-title">ปัญหาที่พบ <span style="color:var(--gray-400);font-size:12px;font-weight:400">(เลือกได้หลายข้อ)</span></div>
-            <div class="issues-grid">
-                <label class="issue-chip" onclick="toggleIssue(this,'wrongful_termination')">
-                    <input type="checkbox" value="wrongful_termination">
-                    <span class="chip-icon">🔴</span><span class="chip-label">ถูกเลิกจ้างโดยไม่มีความผิด</span><span class="chip-check"></span>
-                </label>
-                <label class="issue-chip" onclick="toggleIssue(this,'forced_resignation')">
-                    <input type="checkbox" value="forced_resignation">
-                    <span class="chip-icon">😰</span><span class="chip-label">ถูกบังคับให้ลาออก</span><span class="chip-check"></span>
-                </label>
-                <label class="issue-chip" onclick="toggleIssue(this,'wage_arrears')">
-                    <input type="checkbox" value="wage_arrears">
-                    <span class="chip-icon">💰</span><span class="chip-label">ค่าจ้างค้างจ่าย</span><span class="chip-check"></span>
-                </label>
-                <label class="issue-chip" onclick="toggleIssue(this,'no_overtime_pay')">
-                    <input type="checkbox" value="no_overtime_pay">
-                    <span class="chip-icon">⏰</span><span class="chip-label">ไม่ได้รับค่าล่วงเวลา</span><span class="chip-check"></span>
-                </label>
-                <label class="issue-chip" onclick="toggleIssue(this,'unused_leave')">
-                    <input type="checkbox" value="unused_leave">
-                    <span class="chip-icon">📅</span><span class="chip-label">วันลาที่ไม่ได้ใช้ ไม่ได้รับชดเชย</span><span class="chip-check"></span>
-                </label>
-                <label class="issue-chip" onclick="toggleIssue(this,'unfair_dismissal')">
-                    <input type="checkbox" value="unfair_dismissal">
-                    <span class="chip-icon">⚖️</span><span class="chip-label">เลิกจ้างไม่เป็นธรรม</span><span class="chip-check"></span>
-                </label>
-            </div>
-        </div>
-
-        <button class="btn-primary" onclick="submitStep1()" id="analyzeBtn">🔍 วิเคราะห์สิทธิ์ของฉัน</button>
-        <p class="disclaimer" style="margin-top:12px">⚠️ ข้อมูลนี้เป็นคำแนะนำเบื้องต้น ไม่ใช่คำปรึกษาทางกฎหมาย</p>
-    </div>
-
-    <!-- ══════ LOADING ══════ -->
-    <div class="step-view" id="stepLoading">
-        <div class="loading-card">
-            <div class="spinner"></div>
-            <p>น้องช้างกำลังวิเคราะห์ข้อมูลของคุณ…</p>
-        </div>
-    </div>
-
-    <!-- ══════ STEP 2 — ผลการวิเคราะห์ ══════ -->
-    <div class="step-view" id="step2">
-        <div class="card" id="analysisCard">
-            <div class="card-title">ผลการวิเคราะห์</div>
-            <div id="urgencyBadge"></div>
-            <div class="diagnosis-box" id="diagnosisText"></div>
-            <div style="margin-bottom:14px">
-                <div class="card-title" style="margin-bottom:10px">สิทธิ์ที่คุณได้รับ</div>
-                <ul class="list-items" id="rightsList"></ul>
-            </div>
-            <div style="margin-bottom:14px">
-                <div class="card-title" style="margin-bottom:10px">สิ่งที่เรียกร้องได้</div>
-                <ul class="list-items" id="claimList"></ul>
-            </div>
-            <div>
-                <div class="card-title" style="margin-bottom:10px">ค่าชดเชยโดยประมาณ</div>
-                <div class="compensation-grid" id="compGrid"></div>
-            </div>
-            <div id="legalBox"></div>
-            <div id="warningBox"></div>
-        </div>
-
-        <!-- STEP 3 offer (เดิมคือ petition question) -->
-        <div class="offer-card" id="petitionQuestion">
-            <h3>📦 ต้องการเตรียมเอกสารฟ้องร้องไหมครับ?</h3>
-            <p>น้องช้างจะช่วยสร้างเอกสารทางกฎหมายทั้งหมด<br>พร้อมแนะนำขั้นตอนการยื่นคำร้องให้ครับ</p>
-            <div style="background:white;border-radius:10px;padding:12px 14px;margin-bottom:16px;text-align:left">
-                <div style="font-size:12.5px;color:#374151;display:flex;flex-direction:column;gap:7px">
-                    <div>✅ &nbsp;<strong>หนังสือบอกกล่าวทวงถาม</strong> — ส่งถึงนายจ้างก่อนฟ้อง</div>
-                    <div>✅ &nbsp;<strong>แบบฟอร์ม คร.7</strong> — ยื่นกรมสวัสดิการและคุ้มครองแรงงาน</div>
-                </div>
-            </div>
-            <div class="btn-row">
-                <button class="btn-danger" onclick="answerNo()">ไม่ต้องการ</button>
-                <button class="btn-primary" style="flex:1" onclick="answerYes()">✅ ต้องการเตรียมเอกสาร</button>
+<!-- STEP 1 -->
+<div class="step-view" id="step1">
+    <div class="card" style="background:linear-gradient(135deg,#f0fdf4,#dcfce7);border:1.5px solid var(--green-mid)">
+        <div style="display:flex;gap:10px;align-items:flex-start">
+            <span style="font-size:22px">🐘</span>
+            <div style="font-size:13.5px;color:#14532d;line-height:1.75">
+                <strong>กรอกข้อมูลให้ครบ</strong> เพื่อให้ผมวิเคราะห์สิทธิ์ตามกฎหมายแรงงานไทยได้แม่นยำที่สุดครับ
             </div>
         </div>
     </div>
-
-    <!-- ══════ STEP 3 — เอกสารที่มีอยู่ ══════ -->
-    <div class="step-view" id="step3">
-        <div class="card" style="background:linear-gradient(135deg,#f0fdf4,#dcfce7);border:1.5px solid var(--green-mid)">
-            <div style="display:flex;gap:10px;align-items:flex-start">
-                <span style="font-size:22px;flex-shrink:0">📁</span>
-                <div style="font-size:13.5px;color:#14532d;line-height:1.75">
-                    ตอนนี้คุณ<strong>มีเอกสารหลักฐานอะไรอยู่บ้าง</strong>ครับ?<br>
-                    เลือกทุกอย่างที่มี น้องช้างจะสรุปให้ว่าขาดอะไรไป
-                </div>
+    <div style="background:white;border:1px solid var(--gray-200);border-radius:10px;padding:11px 14px;margin-bottom:14px;display:flex;align-items:flex-start;gap:10px">
+        <span style="font-size:16px;flex-shrink:0">🔒</span>
+        <div style="font-size:12.5px;color:#374151;line-height:1.6">
+            <strong>ข้อมูลของคุณปลอดภัย</strong> — ใช้เพื่อการคำนวณและสร้างเอกสารเท่านั้น<br>
+            <span style="color:#6b7280">❌ ไม่มีการขอเลขบัตรประชาชน / ข้อมูลส่วนตัวที่ละเอียดอ่อน</span>
+        </div>
+    </div>
+    <div class="card">
+        <div class="card-title">ข้อมูลส่วนตัว</div>
+        <div class="form-grid">
+            <div class="field span2"><label>ชื่อ-นามสกุล <span class="req">*</span></label><input type="text" id="f_name" placeholder="เช่น สมชาย ใจดี"></div>
+            <div class="field"><label>อายุ <span class="req">*</span></label><input type="number" id="f_age" placeholder="32" min="15" max="80"></div>
+            <div class="field"><label>รูปแบบการจ้างงาน <span class="req">*</span></label>
+                <select id="f_employment_type"><option value="">-- เลือก --</option><option>พนักงานประจำ</option><option>พนักงานสัญญาจ้าง</option><option>พนักงานรายวัน</option><option>พาร์ทไทม์</option></select>
             </div>
         </div>
-
-        <div class="card">
-            <div class="card-title">📋 เลือกเอกสารที่คุณมีอยู่แล้ว</div>
-            <div id="evidenceCheckList" style="display:flex;flex-direction:column;gap:8px"></div>
-        </div>
-
-        <div style="background:#fffbeb;border:1.5px solid #fcd34d;border-radius:12px;padding:14px 16px;margin-bottom:14px">
-            <div style="font-size:12.5px;font-weight:700;color:#92400e;margin-bottom:6px">⚠️ ยังไม่มีเอกสารบางส่วน? ไม่เป็นไรครับ</div>
-            <div style="font-size:12px;color:#78350f;line-height:1.7">
-                ยื่นคำร้องได้แม้เอกสารไม่ครบ เจ้าหน้าที่จะช่วยรวบรวมเพิ่มเติมได้ครับ
+    </div>
+    <div class="card">
+        <div class="card-title">ข้อมูลการทำงาน</div>
+        <div class="form-grid">
+            <div class="field"><label>อายุงาน (ปี) <span class="req">*</span></label><input type="number" id="f_work_years" placeholder="2.5" min="0" step="0.1"></div>
+            <div class="field"><label>ขนาดบริษัท <span class="req">*</span></label>
+                <select id="f_company_size"><option value="">-- เลือก --</option><option>น้อยกว่า 5 คน</option><option>5–30 คน</option><option>31–100 คน</option><option>มากกว่า 100 คน</option></select>
+            </div>
+            <div class="field"><label>เงินเดือน (บาท/เดือน) <span class="req">*</span></label><input type="number" id="f_monthly_salary" placeholder="20000" min="0"></div>
+            <div class="field"><label>วันลาพักร้อนคงเหลือ</label>
+                <div class="leave-row"><input type="number" id="f_unused_leave" placeholder="0" min="0" style="width:70px"><span>วัน จาก</span><input type="number" id="f_total_leave" placeholder="0" min="0" style="width:70px"><span>วัน</span></div>
             </div>
         </div>
+    </div>
+    <div class="card">
+        <div class="card-title">ปัญหาที่พบ <span style="color:var(--gray-400);font-size:12px;font-weight:400">(เลือกได้หลายข้อ)</span></div>
+        <div class="issues-grid">
+            <label class="issue-chip" onclick="toggleIssue(this,'wrongful_termination')"><input type="checkbox"><span class="chip-icon">🔴</span><span class="chip-label">ถูกเลิกจ้างโดยไม่มีความผิด</span><span class="chip-check"></span></label>
+            <label class="issue-chip" onclick="toggleIssue(this,'forced_resignation')"><input type="checkbox"><span class="chip-icon">😰</span><span class="chip-label">ถูกบังคับให้ลาออก</span><span class="chip-check"></span></label>
+            <label class="issue-chip" onclick="toggleIssue(this,'wage_arrears')"><input type="checkbox"><span class="chip-icon">💰</span><span class="chip-label">ค่าจ้างค้างจ่าย</span><span class="chip-check"></span></label>
+            <label class="issue-chip" onclick="toggleIssue(this,'no_overtime_pay')"><input type="checkbox"><span class="chip-icon">⏰</span><span class="chip-label">ไม่ได้รับค่าล่วงเวลา</span><span class="chip-check"></span></label>
+            <label class="issue-chip" onclick="toggleIssue(this,'unused_leave')"><input type="checkbox"><span class="chip-icon">📅</span><span class="chip-label">วันลาที่ไม่ได้ใช้</span><span class="chip-check"></span></label>
+            <label class="issue-chip" onclick="toggleIssue(this,'unfair_dismissal')"><input type="checkbox"><span class="chip-icon">⚖️</span><span class="chip-label">เลิกจ้างไม่เป็นธรรม</span><span class="chip-check"></span></label>
+        </div>
+    </div>
+    <button class="btn-primary" onclick="submitStep1()">🔍 วิเคราะห์สิทธิ์ของฉัน</button>
+    <p class="disclaimer" style="margin-top:12px">⚠️ ข้อมูลนี้เป็นคำแนะนำเบื้องต้น ไม่ใช่คำปรึกษาทางกฎหมาย</p>
+</div>
 
-        <button class="btn-primary" onclick="goToStep4()">ถัดไป → กรอกข้อมูลเพิ่มเติม</button>
-        <div class="btn-row" style="margin-top:10px">
-            <button class="btn-secondary" onclick="goBackTo('step2')">← ย้อนกลับ</button>
+<!-- LOADING -->
+<div class="step-view" id="stepLoading">
+    <div class="loading-card"><div class="spinner"></div><p>น้องช้างกำลังวิเคราะห์ข้อมูล…</p></div>
+</div>
+
+<!-- STEP 2 — Partial result + payment offer -->
+<div class="step-view" id="step2">
+
+    <!-- ยอดเงินที่อาจได้รับ -->
+    <div class="amount-preview">
+        <div class="amount-label">📊 ผลการวิเคราะห์สิทธิ์ของคุณ<br><span style="font-size:11px;color:#6b7280">(คำนวณตามกฎหมายแรงงานไทย)</span></div>
+        <div style="font-size:13px;color:#166534;margin-bottom:6px">💰 ขั้นต่ำที่คุณควรได้รับ</div>
+        <div class="amount-big" id="totalAmountDisplay">฿0</div>
+        <div class="amount-sub" id="totalAmountNote">✔ คำนวณตาม พ.ร.บ.คุ้มครองแรงงาน 2541 · ✔ ตรงตามมาตรฐานสำนักงานแรงงาน</div>
+        <!-- Locked details -->
+        <div class="amount-locked">
+            <div class="locked-item"><span class="locked-icon">🔒</span><span style="font-size:12px;color:#9ca3af">รายละเอียดการคำนวณ</span><div class="blur-text"></div></div>
+            <div class="locked-item"><span class="locked-icon">🔒</span><span style="font-size:12px;color:#9ca3af">มาตรากฎหมายที่อ้างอิง</span><div class="blur-text"></div></div>
+            <div class="locked-item"><span class="locked-icon">🔒</span><span style="font-size:12px;color:#9ca3af">ขั้นตอนการเรียกร้อง</span><div class="blur-text"></div></div>
         </div>
     </div>
 
-    <!-- ══════ STEP 4 — รายละเอียดเพิ่มเติม ══════ -->
-    <div class="step-view" id="step4">
-        <div class="petition-note">
-            📌 กรอกข้อมูลด้านล่าง น้องช้างจะสร้าง <strong>2 เอกสาร</strong> ให้ในไฟล์ ZIP เดียวครับ<br>
-            ① หนังสือบอกกล่าวทวงถาม &nbsp;② แบบฟอร์ม คร.7
+    <!-- Urgency badge -->
+    <div style="text-align:center;margin-bottom:14px" id="urgencyBadge2"></div>
+
+    <!-- Payment offer -->
+    <div class="card" style="border:2px solid #a855f7;background:linear-gradient(135deg,#faf5ff,#ede9fe)">
+        <div style="text-align:center;margin-bottom:16px">
+            <div style="font-size:28px;margin-bottom:8px">📄</div>
+            <div style="font-size:16px;font-weight:800;color:#3b0764;margin-bottom:6px">สร้างเอกสารและยื่นคำร้องได้ทันที</div>
+            <div style="font-size:13px;color:#6d28d9;line-height:1.6">จากผลการวิเคราะห์ของคุณ น้องช้างจะสร้างเอกสาร<br>ตามมาตรฐานสำนักงานแรงงานให้โดยอัตโนมัติ</div>
         </div>
 
-        <!-- ผู้ร้อง -->
-        <div class="card">
-            <div class="card-title">ข้อมูลผู้ร้อง</div>
-            <div class="form-grid">
-                <div class="field span2">
-                    <label>ที่อยู่ปัจจุบัน <span class="req">*</span></label>
-                    <input type="text" id="p_address" placeholder="บ้านเลขที่ ซอย ถนน">
-                </div>
-                <div class="field">
-                    <label>จังหวัด <span class="req">*</span></label>
-                    <input type="text" id="p_province" placeholder="เช่น กรุงเทพมหานคร">
-                </div>
-                <div class="field">
-                    <label>เบอร์โทรศัพท์ <span class="req">*</span></label>
-                    <input type="text" id="p_phone" placeholder="เช่น 081-234-5678">
-                </div>
-                <div class="field">
-                    <label>ตำแหน่งงาน <span class="req">*</span></label>
-                    <input type="text" id="p_position" placeholder="เช่น พนักงานบัญชี">
-                </div>
+        <!-- Package contents -->
+        <div style="background:white;border-radius:10px;padding:14px;margin-bottom:14px">
+            <div style="font-size:12px;color:#374151;display:flex;flex-direction:column;gap:8px">
+                <div style="display:flex;align-items:flex-start;gap:8px"><span>✅</span><div><strong>หนังสือบอกกล่าวทวงถาม</strong><div style="font-size:11.5px;color:#6b7280;margin-top:1px">ส่งถึงนายจ้างก่อนยื่น คร.7</div></div></div>
+                <div style="display:flex;align-items:flex-start;gap:8px"><span>✅</span><div><strong>แบบฟอร์ม คร.7</strong><div style="font-size:11.5px;color:#6b7280;margin-top:1px">ยื่นกรมสวัสดิการและคุ้มครองแรงงาน</div></div></div>
+                <div style="display:flex;align-items:flex-start;gap:8px"><span>✅</span><div><strong>รายละเอียดการคำนวณ + มาตรากฎหมาย</strong><div style="font-size:11.5px;color:#6b7280;margin-top:1px">อ้างอิงตาม พ.ร.บ.คุ้มครองแรงงาน 2541</div></div></div>
+                <div style="display:flex;align-items:flex-start;gap:8px"><span>✅</span><div><strong>คู่มือขั้นตอนการยื่น + Timeline</strong><div style="font-size:11.5px;color:#6b7280;margin-top:1px">พร้อมวันที่โดยประมาณ</div></div></div>
             </div>
         </div>
 
-        <!-- นายจ้าง -->
-        <div class="card">
-            <div class="card-title">ข้อมูลนายจ้าง</div>
-            <div class="form-grid">
-                <div class="field span2">
-                    <label>ชื่อบริษัท / นายจ้าง <span class="req">*</span></label>
-                    <input type="text" id="p_employer_name" placeholder="เช่น บริษัท ABC จำกัด">
-                </div>
-                <div class="field">
-                    <label>ประเภทธุรกิจ</label>
-                    <input type="text" id="p_business_type" placeholder="เช่น ค้าปลีก">
-                </div>
-                <div class="field">
-                    <label>จังหวัดที่ตั้งบริษัท <span class="req">*</span></label>
-                    <input type="text" id="p_employer_province" placeholder="เช่น กรุงเทพมหานคร">
-                </div>
-                <div class="field span2">
-                    <label>ที่อยู่บริษัท</label>
-                    <input type="text" id="p_employer_address" placeholder="บ้านเลขที่ ถนน">
-                </div>
-                <div class="field">
-                    <label>ชื่อ-นามสกุลนายจ้าง</label>
-                    <input type="text" id="p_employer_person" placeholder="ถ้าทราบ">
-                </div>
-            </div>
+        <!-- Legal trust badges -->
+        <div class="legal-badges" style="justify-content:center;margin-bottom:14px">
+            <span class="legal-badge">✔ อ้างอิงตาม พ.ร.บ.2541</span>
+            <span class="legal-badge">✔ ใช้ยื่นสำนักงานแรงงานได้จริง</span>
+            <span class="legal-badge">✔ รูปแบบมาตรฐานราชการ</span>
         </div>
 
-        <!-- ช่วงเวลาทำงาน -->
-        <div class="card">
-            <div class="card-title">ช่วงเวลาทำงาน</div>
-            <div class="form-grid">
-                <div class="field">
-                    <label>วันที่เริ่มทำงาน <span class="req">*</span></label>
-                    <input type="text" id="p_start_date" placeholder="วว/ดด/ปปปป">
-                </div>
-                <div class="field">
-                    <label>วันสุดท้ายที่ทำงาน <span class="req">*</span></label>
-                    <input type="text" id="p_end_date" placeholder="วว/ดด/ปปปป">
-                </div>
-            </div>
-        </div>
-
-        <!-- รายละเอียด -->
-        <div class="card">
-            <div class="card-title">รายละเอียดการเรียกร้อง</div>
-            <div class="form-grid full">
-                <div class="field">
-                    <label>รายละเอียดปัญหา <span class="req">*</span></label>
-                    <textarea id="p_reason" rows="4" placeholder="อธิบายสถานการณ์โดยละเอียด เช่น วันที่ถูกเลิกจ้าง เหตุการณ์ที่เกิดขึ้น สิ่งที่นายจ้างแจ้ง ฯลฯ"></textarea>
-                </div>
-                <div class="field">
-                    <label>จังหวัดที่ยื่นคำร้อง</label>
-                    <input type="text" id="p_filed_province" value="กรุงเทพมหานคร">
-                </div>
-            </div>
-        </div>
-
-        <button class="btn-primary" onclick="generatePackage()" id="pdfBtn">📦 สร้างแพ็กเกจเอกสาร</button>
-        <div class="btn-row" style="margin-top:10px">
-            <button class="btn-secondary" onclick="goBackTo('step3')">← ย้อนกลับ</button>
-        </div>
-        <p class="disclaimer" style="margin-top:12px">⚠️ ข้อมูลนี้เป็นคำแนะนำเบื้องต้น ไม่ใช่คำปรึกษาทางกฎหมาย</p>
-    </div>
-
-    <!-- ══════ LOADING PDF ══════ -->
-    <div class="step-view" id="stepPdfLoading">
-        <div class="loading-card">
-            <div class="spinner"></div>
-            <p>น้องช้างกำลังสร้างเอกสาร…<br><span style="font-size:12px;color:#9ca3af">อาจใช้เวลา 30–60 วินาทีครับ</span></p>
+        <button class="btn-pay" onclick="proceedToPay()">
+            👉 สร้างเอกสารและดำเนินการต่อ — XXX ฿
+        </button>
+        <div style="text-align:center;margin-top:10px;display:flex;flex-direction:column;gap:4px">
+            <span style="font-size:12px;color:#6d28d9">✔ ชำระครั้งเดียว ไม่มีค่าใช้จ่ายเพิ่ม</span>
+            <span style="font-size:12px;color:#6d28d9">✔ ดาวน์โหลดได้ทันที พร้อมยื่นได้เลย</span>
         </div>
     </div>
 
-    <!-- ══════ STEP 5 — ผลลัพธ์ + เอกสารที่ขาด + Timeline ══════ -->
-    <div class="step-view" id="step5">
+    <div class="btn-row">
+        <button class="btn-danger" onclick="answerNo()">ไม่ต้องการ</button>
+    </div>
+</div>
 
-        <!-- ดาวน์โหลดสำเร็จ -->
-        <div class="done-card" style="margin-bottom:14px">
-            <div class="done-icon">✅</div>
-            <h3>สร้างเอกสารเรียบร้อยแล้วครับ!</h3>
-            <p style="margin-bottom:16px">ไฟล์ ZIP มีเอกสาร 2 ฉบับ พร้อมนำไปใช้ได้เลย</p>
-            <button class="btn-primary" onclick="redownload()" style="margin-top:0">⬇️ ดาวน์โหลดอีกครั้ง</button>
+<!-- STEP 3 — Full result + evidence + form (after payment) -->
+<div class="step-view" id="step3">
+
+    <!-- Full analysis result -->
+    <div class="card">
+        <div class="card-title">ผลการวิเคราะห์</div>
+        <div class="legal-badges">
+            <span class="legal-badge">✔ อ้างอิง พ.ร.บ.คุ้มครองแรงงาน 2541</span>
+            <span class="legal-badge" id="legalMatra"></span>
         </div>
-
-        <!-- สรุปเอกสาร: มี / ขาด -->
-        <div class="card">
-            <div class="card-title">📎 สถานะเอกสารหลักฐานของคุณ</div>
-
-            <div id="docHave" style="margin-bottom:14px">
-                <div style="font-size:12.5px;font-weight:700;color:#166534;margin-bottom:8px">✅ มีแล้ว</div>
-                <div id="docHaveList" style="display:flex;flex-direction:column;gap:6px"></div>
-            </div>
-
-            <div id="docMissing">
-                <div style="font-size:12.5px;font-weight:700;color:#991b1b;margin-bottom:8px">⚠️ ยังขาด / ควรเตรียมเพิ่ม</div>
-                <div id="docMissingList" style="display:flex;flex-direction:column;gap:6px"></div>
-                <div style="margin-top:10px;padding:10px 12px;background:#fffbeb;border-radius:8px;font-size:12px;color:#78350f;line-height:1.6">
-                    💡 ยื่นได้แม้เอกสารไม่ครบ เจ้าหน้าที่จะช่วยรวบรวมเพิ่มเติมระหว่างการไต่สวนครับ
-                </div>
-            </div>
+        <div style="background:var(--blue-light);border:1.5px solid #bfdbfe;border-radius:12px;padding:14px 16px;margin-bottom:14px;font-size:14px;color:#1e40af;line-height:1.7" id="diagnosisText"></div>
+        <div style="margin-bottom:14px">
+            <div class="card-title" style="margin-bottom:10px">สิทธิ์ที่คุณได้รับ</div>
+            <ul style="list-style:none;display:flex;flex-direction:column;gap:8px" id="rightsList"></ul>
         </div>
-
-        <!-- ขั้นตอนการยื่น -->
-        <div class="card">
-            <div class="card-title">📋 ขั้นตอนการยื่นเอกสาร</div>
-            <div style="display:flex;flex-direction:column;gap:14px">
-                <div style="display:flex;gap:12px;align-items:flex-start">
-                    <div style="min-width:28px;height:28px;background:var(--green);border-radius:50%;display:flex;align-items:center;justify-content:center;color:white;font-size:13px;font-weight:700;flex-shrink:0">1</div>
-                    <div>
-                        <div style="font-size:13.5px;font-weight:700;color:#111827;margin-bottom:3px">ส่งหนังสือบอกกล่าวถึงนายจ้างก่อน</div>
-                        <div style="font-size:12.5px;color:#6b7280;line-height:1.6">ส่งทางไปรษณีย์ลงทะเบียนตอบรับ เก็บใบตอบรับไว้เป็นหลักฐาน รอ 15 วัน ถ้านายจ้างไม่ตอบสนอง ดำเนินการต่อ</div>
-                    </div>
-                </div>
-                <div style="display:flex;gap:12px;align-items:flex-start">
-                    <div style="min-width:28px;height:28px;background:var(--green);border-radius:50%;display:flex;align-items:center;justify-content:center;color:white;font-size:13px;font-weight:700;flex-shrink:0">2</div>
-                    <div>
-                        <div style="font-size:13.5px;font-weight:700;color:#111827;margin-bottom:3px">ยื่นแบบ คร.7 ที่กรมแรงงาน</div>
-                        <div style="font-size:12.5px;color:#6b7280;line-height:1.6">
-                            <strong>ออนไลน์:</strong> eservice.labour.go.th (24 ชม.)<br>
-                            <strong>ด้วยตนเอง:</strong> สำนักงานสวัสดิการฯ ในจังหวัดที่ทำงาน<br>
-                            <strong>โทรสายด่วน:</strong> 1546 หรือ 1506 กด 3
-                        </div>
-                    </div>
-                </div>
-                <div style="display:flex;gap:12px;align-items:flex-start">
-                    <div style="min-width:28px;height:28px;background:var(--green);border-radius:50%;display:flex;align-items:center;justify-content:center;color:white;font-size:13px;font-weight:700;flex-shrink:0">3</div>
-                    <div>
-                        <div style="font-size:13.5px;font-weight:700;color:#111827;margin-bottom:3px">รอเจ้าหน้าที่นัดหมายไกล่เกลี่ย</div>
-                        <div style="font-size:12.5px;color:#6b7280;line-height:1.6">นำเอกสารหลักฐานทั้งหมดมาด้วย โดยปกติใช้เวลา 30–60 วัน</div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Timeline -->
-        <div class="card">
-            <div class="card-title">⏱ กำหนดการโดยประมาณ</div>
-            <div id="timelineContainer"></div>
-        </div>
-
-        <!-- ข้อควรระวัง -->
-        <div class="card" style="background:#fef2f2;border:1.5px solid #fecaca">
-            <div class="card-title" style="color:#991b1b">⚠️ ข้อควรระวังสำคัญ</div>
-            <div style="display:flex;flex-direction:column;gap:8px;font-size:13px;color:#7f1d1d;line-height:1.7">
-                <div>🔴 <strong>อายุความ 2 ปี</strong> — ต้องยื่นคำร้องภายใน 2 ปี นับจากวันที่ถูกละเมิดสิทธิ์</div>
-                <div>🔴 <strong>อย่าลาออกเอง</strong> — ถ้าถูกบังคับให้ลาออก ให้ระบุว่า "ถูกเลิกจ้าง" เท่านั้น</div>
-                <div>🔴 <strong>เก็บหลักฐานทุกอย่าง</strong> — ห้ามลบ LINE ห้ามคืนเอกสาร ก่อนได้รับเงิน</div>
-                <div>🟡 <strong>ไม่ต้องมีทนาย</strong> — ยื่น คร.7 ด้วยตนเองได้ ฟรี ไม่มีค่าใช้จ่าย</div>
-            </div>
-        </div>
-
-        <button class="btn-primary" onclick="resetAll()" style="margin-top:4px">🔄 เริ่มใหม่</button>
     </div>
 
-    <!-- ══════ DONE (ไม่ต้องการยื่น) ══════ -->
-    <div class="step-view" id="stepDone">
-        <div class="done-card">
-            <div class="done-icon">🐘</div>
-            <h3>ขอบคุณที่ใช้บริการครับ</h3>
-            <p>หากมีข้อสงสัยเพิ่มเติม สามารถปรึกษาได้ที่<br>
-               <strong>กรมสวัสดิการและคุ้มครองแรงงาน</strong><br>
-               โทร. 1506 กด 3 ฟรีตลอด 24 ชั่วโมง</p>
-            <button class="btn-primary" onclick="resetAll()">🔄 เริ่มใหม่</button>
+    <!-- Compensation breakdown (3 categories) -->
+    <div class="card">
+        <div class="card-title">รายละเอียดค่าชดเชย</div>
+
+        <!-- Confirmed -->
+        <div class="comp-section" id="compConfirmedSection">
+            <div class="comp-section-title comp-confirmed">✅ สิทธิ์ที่ได้แน่นอน (ตามกฎหมาย)</div>
+            <div class="comp-grid" id="compConfirmedGrid"></div>
+        </div>
+
+        <!-- Possible -->
+        <div class="comp-section" id="compPossibleSection">
+            <div class="comp-section-title comp-possible">⚠️ อาจมีสิทธิ์ (ขึ้นอยู่กับการพิจารณา)</div>
+            <div class="comp-grid" id="compPossibleGrid"></div>
+        </div>
+
+        <!-- Estimated -->
+        <div class="comp-section" id="compEstimatedSection">
+            <div class="comp-section-title comp-estimated">📊 ประมาณการ (ต้องพิสูจน์เพิ่มเติม)</div>
+            <div class="comp-grid" id="compEstimatedGrid"></div>
+        </div>
+
+        <div style="background:#fef9c3;border-radius:8px;padding:10px 12px;font-size:12px;color:#713f12;line-height:1.6;margin-top:8px">
+            ⚠️ ตัวเลขข้างต้นเป็นการประมาณการเบื้องต้น จำนวนที่ได้รับจริงขึ้นอยู่กับคำพิจารณาของพนักงานตรวจแรงงาน
         </div>
     </div>
+
+    <!-- Evidence checklist with reasons -->
+    <div class="card">
+        <div class="card-title">📁 เอกสารที่คุณมีอยู่แล้ว</div>
+        <div style="font-size:13px;color:#374151;margin-bottom:12px;line-height:1.7">เลือกเอกสารที่มีอยู่ น้องช้างจะสรุปให้ว่าขาดอะไรไปครับ</div>
+        <div id="evidenceCheckList"></div>
+        <div style="padding:12px 14px;background:#fffbeb;border:1.5px solid #fcd34d;border-radius:10px;margin-top:4px">
+            <div style="font-size:12.5px;font-weight:700;color:#92400e;margin-bottom:4px">⚠️ ยังไม่มีเอกสารบางส่วน? ไม่เป็นไรครับ</div>
+            <div style="font-size:12px;color:#78350f;line-height:1.6">ยื่นได้แม้ไม่ครบ เจ้าหน้าที่จะช่วยรวบรวมระหว่างการไต่สวนครับ</div>
+        </div>
+    </div>
+
+    <!-- Petition form -->
+    <div class="petition-note">
+        📌 กรอกข้อมูลด้านล่าง <strong>ระบบจะสร้างเอกสารตามมาตรฐานสำนักงานแรงงานให้อัตโนมัติ</strong><br>
+        ① หนังสือบอกกล่าวทวงถาม &nbsp;② แบบฟอร์ม คร.7 (ยื่นสำนักงานแรงงานได้ทันที)
+    </div>
+
+    <div class="card">
+        <div class="card-title">ข้อมูลผู้ร้อง</div>
+        <div class="form-grid">
+            <div class="field span2"><label>ที่อยู่ปัจจุบัน <span class="req">*</span></label><input type="text" id="p_address" placeholder="บ้านเลขที่ ซอย ถนน"></div>
+            <div class="field"><label>จังหวัด <span class="req">*</span></label><input type="text" id="p_province" placeholder="กรุงเทพมหานคร"></div>
+            <div class="field"><label>เบอร์โทรศัพท์ <span class="req">*</span></label><input type="text" id="p_phone" placeholder="081-234-5678"></div>
+            <div class="field"><label>ตำแหน่งงาน <span class="req">*</span></label><input type="text" id="p_position" placeholder="พนักงานบัญชี"></div>
+        </div>
+    </div>
+    <div class="card">
+        <div class="card-title">ข้อมูลนายจ้าง</div>
+        <div class="form-grid">
+            <div class="field span2"><label>ชื่อบริษัท / นายจ้าง <span class="req">*</span></label><input type="text" id="p_employer_name" placeholder="บริษัท ABC จำกัด"></div>
+            <div class="field"><label>ประเภทธุรกิจ</label><input type="text" id="p_business_type" placeholder="ค้าปลีก"></div>
+            <div class="field"><label>จังหวัดที่ตั้งบริษัท <span class="req">*</span></label><input type="text" id="p_employer_province" placeholder="กรุงเทพมหานคร"></div>
+            <div class="field span2"><label>ที่อยู่บริษัท</label><input type="text" id="p_employer_address" placeholder="บ้านเลขที่ ถนน"></div>
+            <div class="field"><label>ชื่อ-นามสกุลนายจ้าง</label><input type="text" id="p_employer_person" placeholder="ถ้าทราบ"></div>
+        </div>
+    </div>
+    <div class="card">
+        <div class="card-title">ช่วงเวลาทำงาน</div>
+        <div class="form-grid">
+            <div class="field"><label>วันที่เริ่มทำงาน <span class="req">*</span></label><input type="text" id="p_start_date" placeholder="วว/ดด/ปปปป"></div>
+            <div class="field"><label>วันสุดท้ายที่ทำงาน <span class="req">*</span></label><input type="text" id="p_end_date" placeholder="วว/ดด/ปปปป"></div>
+        </div>
+    </div>
+    <div class="card">
+        <div class="card-title">รายละเอียดการเรียกร้อง</div>
+        <div class="form-grid full">
+            <div class="field"><label>รายละเอียดปัญหา <span class="req">*</span></label><textarea id="p_reason" rows="4" placeholder="อธิบายสถานการณ์โดยละเอียด เช่น วันที่ถูกเลิกจ้าง เหตุการณ์ที่เกิดขึ้น สิ่งที่นายจ้างแจ้ง ฯลฯ"></textarea></div>
+            <div class="field"><label>จังหวัดที่ยื่นคำร้อง</label><input type="text" id="p_filed_province" value="กรุงเทพมหานคร"></div>
+        </div>
+    </div>
+
+    <button class="btn-primary" onclick="generatePackage()" id="pdfBtn">📦 สร้างแพ็กเกจเอกสาร</button>
+    <div class="btn-row" style="margin-top:10px"><button class="btn-secondary" onclick="goBackTo('step2')">← ย้อนกลับ</button></div>
+    <p class="disclaimer" style="margin-top:12px">⚠️ ข้อมูลนี้เป็นคำแนะนำเบื้องต้น ไม่ใช่คำปรึกษาทางกฎหมาย</p>
+</div>
+
+<!-- LOADING PDF -->
+<div class="step-view" id="stepPdfLoading">
+    <div class="loading-card"><div class="spinner"></div><p>น้องช้างกำลังสร้างเอกสาร…<br><span style="font-size:12px;color:#9ca3af">อาจใช้เวลา 30–60 วินาทีครับ</span></p></div>
+</div>
+
+<!-- STEP 4 — Result + Doc status + Timeline -->
+<div class="step-view" id="step4">
+    <div class="done-card" style="margin-bottom:14px">
+        <div style="font-size:40px;margin-bottom:8px">✅</div>
+        <h3 style="font-size:17px;font-weight:800;color:#111827;margin-bottom:4px">📄 เอกสารพร้อมยื่นแล้วครับ!</h3>
+        <p style="font-size:13px;color:#6b7280;margin-bottom:12px">ดาวน์โหลดและยื่นได้ทันที ตรงตามมาตรฐานสำนักงานแรงงาน</p>
+        <button class="btn-primary" onclick="redownload()" style="margin-top:0">⬇️ ดาวน์โหลดเอกสาร</button>
+
+        <!-- Upsell: consultation -->
+        <div style="margin-top:16px;padding:14px 16px;background:#faf5ff;border:1.5px solid #d8b4fe;border-radius:12px;text-align:left">
+            <div style="font-size:13.5px;font-weight:700;color:#3b0764;margin-bottom:8px">🤔 ต้องการความมั่นใจเพิ่มก่อนยื่น?</div>
+            <div style="font-size:12.5px;color:#6d28d9;line-height:1.7;margin-bottom:10px">
+                ✔ ผู้เชี่ยวชาญตรวจสอบเอกสารของคุณ<br>
+                ✔ แนะนำกลยุทธ์การเจรจาและรับมือ<br>
+                ✔ เสริมจุดอ่อนก่อนยื่นคำร้อง
+            </div>
+            <button style="width:100%;background:white;color:#7c3aed;border:1.5px solid #a855f7;padding:10px;border-radius:10px;font-size:13px;font-weight:700;font-family:inherit;cursor:pointer">👉 ขอรับคำปรึกษาเพิ่มเติม</button>
+        </div>
+    </div>
+
+    <!-- Doc status -->
+    <div class="card">
+        <div class="card-title">📎 สถานะเอกสารหลักฐานของคุณ</div>
+        <div id="docHaveSection">
+            <div style="font-size:12.5px;font-weight:700;color:#166534;margin-bottom:8px">✅ มีแล้ว — นำไปแนบได้เลย</div>
+            <div id="docHaveList"></div>
+        </div>
+        <div id="docMissSection" style="margin-top:12px">
+            <div style="font-size:12.5px;font-weight:700;color:#991b1b;margin-bottom:8px">⚠️ ยังขาด — พยายามเตรียมเพิ่ม</div>
+            <div id="docMissList"></div>
+            <div style="margin-top:10px;padding:10px 12px;background:#fffbeb;border-radius:8px;font-size:12px;color:#78350f;line-height:1.6">💡 ยื่นได้แม้ไม่ครบ เจ้าหน้าที่จะช่วยรวบรวมระหว่างการไต่สวนครับ</div>
+        </div>
+    </div>
+
+    <!-- Steps -->
+    <div class="card">
+        <div class="card-title">📋 ขั้นตอนการยื่นเอกสาร</div>
+        <div style="display:flex;flex-direction:column;gap:14px">
+            <div style="display:flex;gap:12px;align-items:flex-start">
+                <div style="min-width:28px;height:28px;background:var(--green);border-radius:50%;display:flex;align-items:center;justify-content:center;color:white;font-size:13px;font-weight:700;flex-shrink:0">1</div>
+                <div><div style="font-size:13.5px;font-weight:700;color:#111827;margin-bottom:3px">ส่งหนังสือบอกกล่าวถึงนายจ้างก่อน</div><div style="font-size:12.5px;color:#6b7280;line-height:1.6">ส่งไปรษณีย์ลงทะเบียนตอบรับ เก็บใบตอบรับ รอ 15 วัน</div></div>
+            </div>
+            <div style="display:flex;gap:12px;align-items:flex-start">
+                <div style="min-width:28px;height:28px;background:var(--green);border-radius:50%;display:flex;align-items:center;justify-content:center;color:white;font-size:13px;font-weight:700;flex-shrink:0">2</div>
+                <div><div style="font-size:13.5px;font-weight:700;color:#111827;margin-bottom:3px">ยื่นแบบ คร.7 ที่กรมแรงงาน</div><div style="font-size:12.5px;color:#6b7280;line-height:1.6"><strong>ออนไลน์:</strong> eservice.labour.go.th<br><strong>สายด่วน:</strong> 1546 หรือ 1506 กด 3</div></div>
+            </div>
+            <div style="display:flex;gap:12px;align-items:flex-start">
+                <div style="min-width:28px;height:28px;background:var(--green);border-radius:50%;display:flex;align-items:center;justify-content:center;color:white;font-size:13px;font-weight:700;flex-shrink:0">3</div>
+                <div><div style="font-size:13.5px;font-weight:700;color:#111827;margin-bottom:3px">รอเจ้าหน้าที่นัดหมายไกล่เกลี่ย</div><div style="font-size:12.5px;color:#6b7280;line-height:1.6">นำเอกสารหลักฐานทั้งหมดมาด้วย ใช้เวลาประมาณ 30–60 วัน</div></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Timeline -->
+    <div class="card">
+        <div class="card-title">📅 กำหนดการโดยประมาณ (อ้างอิงจากสถิติจริง)</div>
+        <div id="timelineContainer"></div>
+    </div>
+
+    <!-- Warning -->
+    <div class="card" style="background:#fef2f2;border:1.5px solid #fecaca">
+        <div class="card-title" style="color:#991b1b">⚠️ ข้อควรระวังสำคัญ</div>
+        <div style="display:flex;flex-direction:column;gap:8px;font-size:13px;color:#7f1d1d;line-height:1.7">
+            <div>🔴 <strong>อายุความ 2 ปี</strong> — ต้องยื่นคำร้องภายใน 2 ปี นับจากวันที่ถูกละเมิดสิทธิ์</div>
+            <div>🔴 <strong>อย่าลาออกเอง</strong> — ถ้าถูกบังคับให้ลาออก ให้ระบุว่า "ถูกเลิกจ้าง" เท่านั้น</div>
+            <div>🔴 <strong>เก็บหลักฐานทุกอย่าง</strong> — ห้ามลบ LINE ห้ามคืนเอกสาร ก่อนได้รับเงิน</div>
+            <div>🟡 <strong>ไม่ต้องมีทนาย</strong> — ยื่น คร.7 ด้วยตนเองได้ ฟรี ไม่มีค่าใช้จ่าย</div>
+        </div>
+    </div>
+
+    <button class="btn-primary" onclick="resetAll()" style="margin-top:4px">🔄 เริ่มใหม่</button>
+</div>
+
+<!-- DONE (no petition) -->
+<div class="step-view" id="stepDone">
+    <div class="done-card">
+        <div style="font-size:48px;margin-bottom:10px">🐘</div>
+        <h3 style="font-size:17px;font-weight:800;color:#111827;margin-bottom:8px">ขอบคุณที่ใช้บริการครับ</h3>
+        <p style="font-size:13.5px;color:#6b7280;line-height:1.7;margin-bottom:20px">หากมีข้อสงสัย สามารถปรึกษาได้ที่<br><strong>กรมสวัสดิการและคุ้มครองแรงงาน</strong><br>โทร. 1506 กด 3 ฟรีตลอด 24 ชั่วโมง</p>
+        <button class="btn-primary" onclick="resetAll()">🔄 เริ่มใหม่</button>
+    </div>
+</div>
 
 </div><!-- /main -->
 
 <script>
-    /* ── State ── */
     let selectedIssues = new Set();
     let analysisResult = {};
     let step1Data = {};
     let checkedEvidence = new Set();
     let lastZipBlob = null;
 
-    /* ── Evidence master list ── */
     const EVIDENCE_MAP = {
         wrongful_termination: [
-            { id:"ev1", icon:"📄", label:"หนังสือแจ้งเลิกจ้าง" },
-            { id:"ev2", icon:"📋", label:"สัญญาจ้างงาน" },
-            { id:"ev3", icon:"💳", label:"สลิปเงินเดือน ย้อนหลัง 3–6 เดือน" },
-            { id:"ev4", icon:"📱", label:"LINE/SMS ที่นายจ้างแจ้งเลิกจ้าง" },
+            { id:"ev1", icon:"📄", label:"หนังสือแจ้งเลิกจ้าง", reason:"พิสูจน์การเลิกจ้างโดยนายจ้าง" },
+            { id:"ev2", icon:"📋", label:"สัญญาจ้างงาน", reason:"ยืนยันเงื่อนไขการจ้างและสิทธิ์" },
+            { id:"ev3", icon:"💳", label:"สลิปเงินเดือน 3–6 เดือน", reason:"ยืนยันอัตราค่าจ้างสำหรับคำนวณค่าชดเชย" },
+            { id:"ev4", icon:"📱", label:"LINE/SMS แจ้งเลิกจ้าง", reason:"หลักฐานการเลิกจ้างในรูปแบบข้อความ" },
         ],
         forced_resignation: [
-            { id:"ev4", icon:"📱", label:"LINE/SMS ที่ถูกกดดันให้ลาออก" },
-            { id:"ev5", icon:"📝", label:"บันทึกบทสนทนา คำพูดที่ถูกข่มขู่" },
-            { id:"ev6", icon:"👥", label:"ชื่อพยานที่รู้เห็นเหตุการณ์" },
-            { id:"ev3", icon:"💳", label:"สลิปเงินเดือน" },
+            { id:"ev4", icon:"📱", label:"LINE/SMS ที่ถูกกดดันให้ลาออก", reason:"พิสูจน์การบังคับ ถือเป็นการเลิกจ้างโดยพฤติกรรม" },
+            { id:"ev5", icon:"📝", label:"บันทึกบทสนทนาข่มขู่", reason:"ใช้โต้แย้งว่าไม่ได้ลาออกเองโดยสมัครใจ" },
+            { id:"ev6", icon:"👥", label:"ชื่อพยานที่รู้เห็นเหตุการณ์", reason:"คำให้การพยานเสริมความน่าเชื่อถือ" },
+            { id:"ev3", icon:"💳", label:"สลิปเงินเดือน", reason:"ยืนยันอัตราค่าจ้างสำหรับคำนวณค่าชดเชย" },
         ],
         wage_arrears: [
-            { id:"ev3", icon:"💳", label:"สลิปเงินเดือนที่ยังไม่ได้รับ" },
-            { id:"ev7", icon:"🏦", label:"สเตทเมนต์บัญชีธนาคาร" },
-            { id:"ev4", icon:"📱", label:"LINE/Email ยืนยันยอดค้างจ่าย" },
+            { id:"ev3", icon:"💳", label:"สลิปเงินเดือนที่ยังไม่ได้รับ", reason:"แสดงยอดค้างชำระที่นายจ้างออกแต่ไม่จ่าย" },
+            { id:"ev7", icon:"🏦", label:"สเตทเมนต์บัญชีธนาคาร", reason:"ยืนยันว่าไม่มีเงินโอนเข้าในรอบที่ค้าง" },
+            { id:"ev4", icon:"📱", label:"LINE/Email ยืนยันยอดค้างจ่าย", reason:"หลักฐานนายจ้างรับรู้และยอมรับว่าค้างจ่าย" },
         ],
         no_overtime_pay: [
-            { id:"ev8", icon:"⏰", label:"บันทึกเวลาทำงาน" },
-            { id:"ev4", icon:"📱", label:"LINE/Email สั่งให้ทำงานล่วงเวลา" },
-            { id:"ev3", icon:"💳", label:"สลิปเงินเดือนที่ไม่มีค่า OT" },
+            { id:"ev8", icon:"⏰", label:"บันทึกเวลาทำงาน/ตารางงาน", reason:"พิสูจน์ชั่วโมงทำงานที่เกินกว่ากำหนด" },
+            { id:"ev4", icon:"📱", label:"LINE/Email สั่งทำงานล่วงเวลา", reason:"แสดงว่านายจ้างสั่งให้ทำ OT แต่ไม่จ่าย" },
+            { id:"ev3", icon:"💳", label:"สลิปเงินเดือนที่ไม่มีค่า OT", reason:"เปรียบเทียบชั่วโมงจริงกับที่จ่าย" },
         ],
         unused_leave: [
-            { id:"ev9", icon:"📅", label:"ใบลาหรือบันทึกวันลาที่ได้รับอนุมัติ" },
-            { id:"ev10", icon:"📋", label:"ระเบียบบริษัทเรื่องวันลา" },
-            { id:"ev3", icon:"💳", label:"สลิปเงินเดือน" },
+            { id:"ev9", icon:"📅", label:"ใบลาหรือบันทึกวันลาที่อนุมัติ", reason:"ยืนยันจำนวนวันลาที่มีสิทธิ์แต่ยังไม่ได้ใช้" },
+            { id:"ev10", icon:"📋", label:"ระเบียบบริษัทเรื่องวันลา", reason:"อ้างอิงนโยบายที่นายจ้างกำหนดเอง" },
+            { id:"ev3", icon:"💳", label:"สลิปเงินเดือน", reason:"คำนวณอัตราค่าวันลาที่ต้องได้รับ" },
         ],
         unfair_dismissal: [
-            { id:"ev1", icon:"📄", label:"หนังสือแจ้งเลิกจ้างพร้อมเหตุผล" },
-            { id:"ev11", icon:"📋", label:"ข้อบังคับการทำงานของบริษัท" },
-            { id:"ev12", icon:"📝", label:"ใบเตือน (ถ้ามี) เพื่อโต้แย้ง" },
-            { id:"ev6", icon:"👥", label:"พยานที่รู้เห็นเหตุการณ์" },
+            { id:"ev1", icon:"📄", label:"หนังสือแจ้งเลิกจ้างพร้อมเหตุผล", reason:"วิเคราะห์ว่าเหตุผลมีน้ำหนักทางกฎหมายหรือไม่" },
+            { id:"ev11", icon:"📋", label:"ข้อบังคับการทำงานของบริษัท", reason:"ตรวจสอบว่าขั้นตอนเลิกจ้างถูกต้องหรือไม่" },
+            { id:"ev12", icon:"📝", label:"ใบเตือน (ถ้ามี)", reason:"โต้แย้งหากเตือนไม่ถูกต้องตามขั้นตอน" },
+            { id:"ev6", icon:"👥", label:"พยานที่รู้เห็นเหตุการณ์", reason:"เสริมน้ำหนักในการพิจารณาของพนักงาน" },
         ],
     };
 
     const ISSUE_LABELS = {
-        wrongful_termination: "ถูกเลิกจ้างโดยไม่มีความผิด",
-        forced_resignation:   "ถูกบังคับให้ลาออก",
-        wage_arrears:         "ค่าจ้างค้างจ่าย",
-        no_overtime_pay:      "ไม่ได้รับค่าล่วงเวลา",
-        unused_leave:         "วันลาที่ยังไม่ได้ใช้",
-        unfair_dismissal:     "เลิกจ้างไม่เป็นธรรม",
+        wrongful_termination:"ถูกเลิกจ้างโดยไม่มีความผิด",
+        forced_resignation:"ถูกบังคับให้ลาออก",
+        wage_arrears:"ค่าจ้างค้างจ่าย",
+        no_overtime_pay:"ไม่ได้รับค่าล่วงเวลา",
+        unused_leave:"วันลาที่ยังไม่ได้ใช้",
+        unfair_dismissal:"เลิกจ้างไม่เป็นธรรม",
     };
 
-    /* ── Progress ── */
-    function updateProgress(activeStep) {
-        for (let i = 1; i <= 5; i++) {
+    function updateProgress(active) {
+        for (let i=1; i<=4; i++) {
             const dot = document.getElementById(`dot${i}`);
             const lbl = document.getElementById(`lbl${i}`);
             if (!dot) continue;
             dot.className = "step-dot";
             if (lbl) lbl.className = "step-label";
-            if (i < activeStep)  dot.classList.add("done");
-            if (i === activeStep){ dot.classList.add("active"); if(lbl) lbl.classList.add("active"); }
+            if (i < active) dot.classList.add("done");
+            if (i === active) { dot.classList.add("active"); if(lbl) lbl.classList.add("active"); }
         }
-        for (let i = 1; i <= 4; i++) {
+        for (let i=1; i<=3; i++) {
             const line = document.getElementById(`line${i}`);
-            if (line) line.className = "step-line" + (i < activeStep ? " done" : "");
+            if (line) line.className = "step-line" + (i < active ? " done" : "");
         }
     }
 
@@ -929,17 +623,12 @@
         document.querySelectorAll(".step-view").forEach(el => el.classList.remove("active"));
         document.getElementById(id).classList.add("active");
         document.getElementById("mainContent").scrollTop = 0;
-        const hideOnWelcome = ["stepWelcome","stepLoading","stepPdfLoading","stepDone"];
-        document.getElementById("progressBar").style.display = hideOnWelcome.includes(id) ? "none" : "block";
+        const hideProgress = ["stepWelcome","stepLoading","stepPdfLoading","stepDone"];
+        document.getElementById("progressBar").style.display = hideProgress.includes(id) ? "none" : "block";
     }
 
-    /* ── Welcome → Step 1 ── */
-    function startForm() {
-        showView("step1");
-        updateProgress(1);
-    }
+    function startForm() { showView("step1"); updateProgress(1); }
 
-    /* ── Issue chip toggle ── */
     function toggleIssue(el, value) {
         event.preventDefault();
         el.classList.toggle("checked");
@@ -947,115 +636,143 @@
         else selectedIssues.delete(value);
     }
 
-    /* ── Step 1 submit ── */
     async function submitStep1() {
-        const name   = document.getElementById("f_name").value.trim();
-        const age    = document.getElementById("f_age").value.trim();
+        const name = document.getElementById("f_name").value.trim();
+        const age = document.getElementById("f_age").value.trim();
         const salary = document.getElementById("f_monthly_salary").value.trim();
-        const years  = document.getElementById("f_work_years").value.trim();
+        const years = document.getElementById("f_work_years").value.trim();
         const empType = document.getElementById("f_employment_type").value;
         const compSize = document.getElementById("f_company_size").value;
 
-        if (!name || !age || !salary || !years || !empType || !compSize) {
-            alert("กรุณากรอกข้อมูลที่มีเครื่องหมาย * ให้ครบถ้วนครับ");
-            return;
-        }
-        if (selectedIssues.size === 0) {
-            alert("กรุณาเลือกปัญหาที่พบอย่างน้อย 1 ข้อครับ");
-            return;
-        }
+        if (!name||!age||!salary||!years||!empType||!compSize) { alert("กรุณากรอกข้อมูลที่มี * ให้ครบครับ"); return; }
+        if (selectedIssues.size === 0) { alert("กรุณาเลือกปัญหาที่พบอย่างน้อย 1 ข้อครับ"); return; }
 
         step1Data = {
-            name, age: parseInt(age),
-            work_years: parseFloat(years),
-            monthly_salary: parseFloat(salary),
-            unused_leave_days: parseInt(document.getElementById("f_unused_leave").value) || 0,
-            total_leave_days: parseInt(document.getElementById("f_total_leave").value) || 0,
-            employment_type: empType,
-            company_size: compSize,
-            issues: Array.from(selectedIssues),
+            name, age:parseInt(age),
+            work_years:parseFloat(years),
+            monthly_salary:parseFloat(salary),
+            unused_leave_days:parseInt(document.getElementById("f_unused_leave").value)||0,
+            total_leave_days:parseInt(document.getElementById("f_total_leave").value)||0,
+            employment_type:empType,
+            company_size:compSize,
+            issues:Array.from(selectedIssues),
         };
 
         showView("stepLoading");
         try {
-            const res = await fetch("/analyze", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify(step1Data)
-            });
+            const res = await fetch("/analyze", { method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify(step1Data) });
             analysisResult = await res.json();
-            renderAnalysis(analysisResult);
+            renderStep2Preview();
             showView("step2");
             updateProgress(2);
         } catch(e) {
-            alert("เกิดข้อผิดพลาด กรุณาลองใหม่ครับ: " + e.message);
-            showView("step1");
-            updateProgress(1);
+            alert("เกิดข้อผิดพลาด: " + e.message);
+            showView("step1"); updateProgress(1);
         }
     }
 
-    /* ── Render Step 2 ── */
-    function renderAnalysis(data) {
-        const urgencyMap = {
-            high:   ["🔴 เร่งด่วนสูง",   "urgency-high"],
-            medium: ["🟡 เร่งด่วนปานกลาง","urgency-medium"],
-            low:    ["🟢 ไม่เร่งด่วน",    "urgency-low"],
-        };
-        const [urgText, urgClass] = urgencyMap[data.urgency] || urgencyMap.medium;
-        document.getElementById("urgencyBadge").innerHTML = `<span class="urgency-badge ${urgClass}">${urgText}</span>`;
-        document.getElementById("diagnosisText").textContent = data.diagnosis || "";
+    function renderStep2Preview() {
+        // Show total amount only
+        const total = (analysisResult.severance_amount||0) + (analysisResult.leave_payout||0);
+        document.getElementById("totalAmountDisplay").textContent = "฿" + total.toLocaleString();
 
-        const rList = document.getElementById("rightsList");
-        rList.innerHTML = "";
-        (data.rights || []).forEach(r => { const li = document.createElement("li"); li.textContent = r; rList.appendChild(li); });
-
-        const cList = document.getElementById("claimList");
-        cList.innerHTML = "";
-        (data.can_claim || []).forEach(c => { const li = document.createElement("li"); li.textContent = c; cList.appendChild(li); });
-
-        const grid = document.getElementById("compGrid");
-        grid.innerHTML = "";
-        const items = [];
-        if (data.severance_amount > 0) items.push({ label:"ค่าชดเชย", amount:`฿${data.severance_amount.toLocaleString()}`, detail: data.severance_detail, highlight: true });
-        if (data.leave_payout > 0)     items.push({ label:"ค่าวันลาที่ยังไม่ได้ใช้", amount:`฿${data.leave_payout.toLocaleString()}`, detail:`${step1Data.unused_leave_days} วัน`, highlight: false });
-        if (items.length === 0)        items.push({ label:"ค่าชดเชย", amount:"ขึ้นอยู่กับกรณี", detail:"ต้องวิเคราะห์เพิ่มเติม", highlight: false });
-        items.forEach(item => {
-            const div = document.createElement("div");
-            div.className = "comp-item" + (item.highlight ? " highlight" : "");
-            div.innerHTML = `<div class="comp-label">${item.label}</div><div class="comp-amount${item.highlight?" green":""}">${item.amount}</div>${item.detail?`<div class="comp-detail">${item.detail}</div>`:""}`;
-            grid.appendChild(div);
-        });
-
-        if (data.legal_basis) document.getElementById("legalBox").innerHTML = `<div class="legal-box">⚖️ ${data.legal_basis}</div>`;
-        if (data.warning)     document.getElementById("warningBox").innerHTML = `<div class="warning-box">⚠️ <span>${data.warning}</span></div>`;
-        document.getElementById("petitionQuestion").style.display = data.recommend_petition === false ? "none" : "block";
+        const urgencyMap = { high:["🔴 เร่งด่วนสูง","urgency-high"], medium:["🟡 เร่งด่วนปานกลาง","urgency-medium"], low:["🟢 ไม่เร่งด่วน","urgency-low"] };
+        const [urgText] = urgencyMap[analysisResult.urgency] || urgencyMap.medium;
+        document.getElementById("urgencyBadge2").innerHTML = `<span style="display:inline-flex;align-items:center;gap:5px;padding:4px 12px;border-radius:20px;font-size:12px;font-weight:700;background:#fef2f2;color:#ef4444">${urgText}</span>`;
     }
 
-    /* ── Step 2 → Step 3 (evidence check) ── */
-    function answerYes() {
-        renderEvidenceChecklist();
+    function proceedToPay() {
+        // TODO: real payment integration here
+        // For now simulate payment success
+        renderStep3Full();
         showView("step3");
         updateProgress(3);
     }
-    function answerNo() {
-        showView("stepDone");
-        document.getElementById("progressBar").style.display = "none";
+
+    function answerNo() { showView("stepDone"); document.getElementById("progressBar").style.display="none"; }
+
+    function renderStep3Full() {
+        const data = analysisResult;
+
+        // Legal matra badge
+        if (data.legal_basis) {
+            document.getElementById("legalMatra").textContent = "✔ " + (data.legal_basis.match(/มาตรา[\s\d,]+/)?.[0] || "มาตรา 118");
+        }
+
+        // Diagnosis
+        document.getElementById("diagnosisText").textContent = data.diagnosis || "";
+
+        // Rights
+        const rList = document.getElementById("rightsList");
+        rList.innerHTML = "";
+        (data.rights||[]).forEach(r => {
+            const li = document.createElement("li");
+            li.style.cssText = "display:flex;align-items:flex-start;gap:9px;font-size:13.5px;color:#374151;line-height:1.6;margin-bottom:8px";
+            li.innerHTML = `<span style="font-size:14px;flex-shrink:0">✅</span>${r}`;
+            rList.appendChild(li);
+        });
+
+        // Compensation — 3 categories
+        const confirmed = [], possible = [], estimated = [];
+
+        if ((data.severance_amount||0) > 0) {
+            confirmed.push({ label:"ค่าชดเชยการเลิกจ้าง", amount:data.severance_amount, detail:data.severance_detail, note:"ตาม มาตรา 118" });
+        }
+        if ((data.leave_payout||0) > 0) {
+            confirmed.push({ label:"ค่าวันลาที่ยังไม่ได้ใช้", amount:data.leave_payout, detail:`${step1Data.unused_leave_days} วัน`, note:"ตาม มาตรา 67" });
+        }
+
+        const issues = Array.from(selectedIssues);
+        if (issues.includes("wrongful_termination")||issues.includes("forced_resignation")||issues.includes("unfair_dismissal")) {
+            const noticeAmt = step1Data.monthly_salary || 0;
+            possible.push({ label:"ค่าจ้างแทนการบอกกล่าว", amount:noticeAmt, detail:"1 เดือน", note:"ขึ้นอยู่กับกรณี" });
+        }
+        if (issues.includes("unfair_dismissal")) {
+            estimated.push({ label:"ค่าเสียหายจากเลิกจ้างไม่เป็นธรรม", amount:null, detail:"ขึ้นอยู่กับคำพิจารณา", note:"อาจสูงถึง 180 วัน" });
+        }
+        if (issues.includes("wage_arrears")) {
+            estimated.push({ label:"ค่าจ้างค้างชำระ + ดอกเบี้ย 15%", amount:null, detail:"ตามจำนวนจริง", note:"ต้องพิสูจน์ด้วยสลิป" });
+        }
+        if (issues.includes("no_overtime_pay")) {
+            estimated.push({ label:"ค่าล่วงเวลาค้างชำระ", amount:null, detail:"ตามชั่วโมงจริง", note:"ต้องพิสูจน์ด้วยบันทึก" });
+        }
+
+        function renderCompGrid(items, type, gridId, sectionId) {
+            const grid = document.getElementById(gridId);
+            grid.innerHTML = "";
+            if (items.length === 0) { document.getElementById(sectionId).style.display="none"; return; }
+            items.forEach(item => {
+                const div = document.createElement("div");
+                div.className = `comp-item ${type}`;
+                div.innerHTML = `
+                    <div class="comp-label">${item.label}</div>
+                    <div class="comp-amount ${type}">${item.amount ? "฿"+item.amount.toLocaleString() : "ขึ้นอยู่กับกรณี"}</div>
+                    ${item.detail ? `<div class="comp-detail">${item.detail}</div>` : ""}
+                    ${item.note ? `<div class="comp-note">${item.note}</div>` : ""}`;
+                grid.appendChild(div);
+            });
+        }
+
+        renderCompGrid(confirmed, "confirmed", "compConfirmedGrid", "compConfirmedSection");
+        renderCompGrid(possible, "possible",  "compPossibleGrid",  "compPossibleSection");
+        renderCompGrid(estimated,"estimated", "compEstimatedGrid", "compEstimatedSection");
+
+        // Evidence checklist
+        renderEvidenceChecklist();
     }
 
-    /* ── Render evidence checklist ── */
     function renderEvidenceChecklist() {
         const seen = new Set();
         const items = [];
         Array.from(selectedIssues).forEach(issue => {
-            (EVIDENCE_MAP[issue] || []).forEach(item => {
+            (EVIDENCE_MAP[issue]||[]).forEach(item => {
                 if (!seen.has(item.id)) { seen.add(item.id); items.push(item); }
             });
         });
         if (items.length === 0) {
             items.push(
-                { id:"ev2", icon:"📋", label:"สัญญาจ้างงาน" },
-                { id:"ev3", icon:"💳", label:"สลิปเงินเดือน" },
-                { id:"ev4", icon:"📱", label:"หลักฐานการสื่อสารกับนายจ้าง" }
+                { id:"ev2", icon:"📋", label:"สัญญาจ้างงาน", reason:"ยืนยันเงื่อนไขการจ้างงาน" },
+                { id:"ev3", icon:"💳", label:"สลิปเงินเดือน", reason:"ยืนยันอัตราค่าจ้าง" }
             );
         }
         checkedEvidence.clear();
@@ -1066,7 +783,7 @@
             div.className = "ev-item";
             div.dataset.id = item.id;
             div.dataset.label = item.label;
-            div.innerHTML = `<div class="ev-check"></div><span style="font-size:18px;flex-shrink:0">${item.icon}</span><span>${item.label}</span>`;
+            div.innerHTML = `<div class="ev-check"></div><span style="font-size:18px;flex-shrink:0">${item.icon}</span><div class="ev-content"><div class="ev-label">${item.label}</div><div class="ev-reason">→ ${item.reason}</div></div>`;
             div.onclick = () => {
                 div.classList.toggle("checked");
                 if (div.classList.contains("checked")) checkedEvidence.add(item.id);
@@ -1076,48 +793,41 @@
         });
     }
 
-    /* ── Step 3 → Step 4 ── */
-    function goToStep4() {
-        showView("step4");
-        updateProgress(4);
-    }
-
-    /* ── Step 4 → Generate Package ── */
     async function generatePackage() {
         const required = ["p_province","p_phone","p_position","p_employer_name","p_employer_province","p_start_date","p_end_date","p_reason"];
         for (const id of required) {
             if (!document.getElementById(id).value.trim()) {
-                alert("กรุณากรอกข้อมูลที่มีเครื่องหมาย * ให้ครบถ้วนครับ");
+                alert("กรุณากรอกข้อมูลที่มี * ให้ครบครับ");
                 document.getElementById(id).focus();
                 return;
             }
         }
 
         const caseData = {
-            complainant_name:  step1Data.name || "",
-            age:               step1Data.age  || "",
-            address:           document.getElementById("p_address").value,
-            province:          document.getElementById("p_province").value,
-            phone:             document.getElementById("p_phone").value,
-            position:          document.getElementById("p_position").value,
-            employer_name:     document.getElementById("p_employer_name").value,
-            employer_address:  document.getElementById("p_employer_address").value,
+            complainant_name: step1Data.name||"",
+            age: step1Data.age||"",
+            address: document.getElementById("p_address").value,
+            province: document.getElementById("p_province").value,
+            phone: document.getElementById("p_phone").value,
+            position: document.getElementById("p_position").value,
+            employer_name: document.getElementById("p_employer_name").value,
+            employer_address: document.getElementById("p_employer_address").value,
             employer_province: document.getElementById("p_employer_province").value,
-            employer_person:   document.getElementById("p_employer_person").value,
-            business_type:     document.getElementById("p_business_type").value,
-            start_date:        document.getElementById("p_start_date").value,
-            end_date:          document.getElementById("p_end_date").value,
-            wage_rate:         step1Data.monthly_salary || "",
-            reason:            document.getElementById("p_reason").value,
-            filed_province:    document.getElementById("p_filed_province").value,
-            issues:            Array.from(selectedIssues),
-            severance_amount:  analysisResult.severance_amount || 0,
-            leave_payout:      analysisResult.leave_payout || 0,
-            notice_pay:        analysisResult.notice_pay || 0,
-            wage_owed:         analysisResult.wage_owed || 0,
-            ot_amount:         analysisResult.ot_amount || 0,
-            total_amount:      (analysisResult.severance_amount || 0) + (analysisResult.leave_payout || 0),
-            deadline:          15,
+            employer_person: document.getElementById("p_employer_person").value,
+            business_type: document.getElementById("p_business_type").value,
+            start_date: document.getElementById("p_start_date").value,
+            end_date: document.getElementById("p_end_date").value,
+            wage_rate: step1Data.monthly_salary||"",
+            reason: document.getElementById("p_reason").value,
+            filed_province: document.getElementById("p_filed_province").value,
+            issues: Array.from(selectedIssues),
+            severance_amount: analysisResult.severance_amount||0,
+            leave_payout: analysisResult.leave_payout||0,
+            notice_pay: analysisResult.notice_pay||0,
+            wage_owed: analysisResult.wage_owed||0,
+            ot_amount: analysisResult.ot_amount||0,
+            total_amount: (analysisResult.severance_amount||0)+(analysisResult.leave_payout||0),
+            deadline: 15,
         };
 
         const btn = document.getElementById("pdfBtn");
@@ -1126,23 +836,16 @@
         showView("stepPdfLoading");
 
         try {
-            const res = await fetch("/generate-package", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ case_data: caseData })
-            });
-            if (!res.ok) { const err = await res.json(); throw new Error(err.error || "Unknown error"); }
-
+            const res = await fetch("/generate-package", { method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify({case_data:caseData}) });
+            if (!res.ok) { const err = await res.json(); throw new Error(err.error||"Unknown error"); }
             lastZipBlob = await res.blob();
             triggerDownload(lastZipBlob);
-            renderStep5();
-            showView("step5");
-            updateProgress(5);
-
-        } catch(e) {
-            alert("❌ เกิดข้อผิดพลาดในการสร้างเอกสาร: " + e.message);
+            renderStep4();
             showView("step4");
             updateProgress(4);
+        } catch(e) {
+            alert("❌ เกิดข้อผิดพลาด: " + e.message);
+            showView("step3"); updateProgress(3);
             btn.disabled = false;
             btn.textContent = "📦 สร้างแพ็กเกจเอกสาร";
         }
@@ -1151,72 +854,48 @@
     function triggerDownload(blob) {
         const url = URL.createObjectURL(blob);
         const a = document.createElement("a");
-        a.href = url; a.download = "labor_package.zip"; a.click();
-        setTimeout(() => URL.revokeObjectURL(url), 5000);
+        a.href=url; a.download="labor_package.zip"; a.click();
+        setTimeout(()=>URL.revokeObjectURL(url),5000);
     }
 
-    function redownload() {
-        if (lastZipBlob) triggerDownload(lastZipBlob);
-    }
+    function redownload() { if(lastZipBlob) triggerDownload(lastZipBlob); }
 
-    /* ── Render Step 5 ── */
-    function renderStep5() {
-        // Collect all evidence items for current issues
+    function renderStep4() {
+        // Collect evidence items
         const seen = new Set();
         const allItems = [];
         Array.from(selectedIssues).forEach(issue => {
-            (EVIDENCE_MAP[issue] || []).forEach(item => {
+            (EVIDENCE_MAP[issue]||[]).forEach(item => {
                 if (!seen.has(item.id)) { seen.add(item.id); allItems.push(item); }
             });
         });
 
-        const haveList    = document.getElementById("docHaveList");
-        const missingList = document.getElementById("docMissingList");
-        haveList.innerHTML = "";
-        missingList.innerHTML = "";
+        const haveList = document.getElementById("docHaveList");
+        const missList = document.getElementById("docMissList");
+        haveList.innerHTML = ""; missList.innerHTML = "";
 
         allItems.forEach(item => {
             const have = checkedEvidence.has(item.id);
             const div = document.createElement("div");
-            div.style.cssText = `display:flex;align-items:center;gap:8px;padding:8px 12px;border-radius:8px;font-size:13px;`;
-            if (have) {
-                div.style.background = "#f0fdf4";
-                div.style.color = "#166534";
-                div.innerHTML = `<span>✅</span><span style="font-size:16px">${item.icon}</span><span>${item.label}</span>`;
-                haveList.appendChild(div);
-            } else {
-                div.style.background = "#fef2f2";
-                div.style.color = "#991b1b";
-                div.innerHTML = `<span>⚠️</span><span style="font-size:16px">${item.icon}</span><span>${item.label}</span>`;
-                missingList.appendChild(div);
-            }
+            div.className = have ? "doc-have-item" : "doc-miss-item";
+            div.innerHTML = `${have?"✅":"⚠️"} <span style="font-size:16px">${item.icon}</span> <div><div style="font-weight:600">${item.label}</div><div style="font-size:11.5px;opacity:.75">${item.reason}</div></div>`;
+            have ? haveList.appendChild(div) : missList.appendChild(div);
         });
 
-        if (haveList.children.length === 0)
-            document.getElementById("docHave").style.display = "none";
-        if (missingList.children.length === 0)
-            document.getElementById("docMissing").style.display = "none";
+        if (haveList.children.length===0) document.getElementById("docHaveSection").style.display="none";
+        if (missList.children.length===0) document.getElementById("docMissSection").style.display="none";
 
         // Timeline
         const today = new Date();
-        function addDays(d, n) {
-            const r = new Date(d); r.setDate(r.getDate() + n); return r;
-        }
-        function fmt(d) {
-            return d.toLocaleDateString("th-TH", { day:"numeric", month:"long", year:"numeric" });
-        }
-        const t1 = today;
-        const t2 = addDays(today, 15);
-        const t3 = addDays(today, 20);
-        const t4 = addDays(today, 80);
-        const t5 = addDays(today, 170);
+        const addDays = (d,n) => { const r=new Date(d); r.setDate(r.getDate()+n); return r; };
+        const fmt = d => d.toLocaleDateString("th-TH",{day:"numeric",month:"long",year:"numeric"});
 
         const timeline = [
-            { label: "ส่งหนังสือบอกกล่าวถึงนายจ้าง",  date: fmt(t1), desc: "ส่งไปรษณีย์ลงทะเบียน เก็บใบตอบรับ" },
-            { label: "รอนายจ้างตอบสนอง",               date: `ภายใน ${fmt(t2)}`, desc: "ถ้าไม่ตอบสนอง ดำเนินการยื่น คร.7 ต่อ" },
-            { label: "ยื่นแบบ คร.7 ต่อกรมแรงงาน",    date: `ประมาณ ${fmt(t3)}`, desc: "ยื่นออนไลน์หรือด้วยตนเอง" },
-            { label: "เจ้าหน้าที่นัดไกล่เกลี่ย",      date: `ประมาณ ${fmt(t4)}`, desc: "นำเอกสารหลักฐานทั้งหมดมาด้วย" },
-            { label: "คำสั่งพนักงานตรวจแรงงาน",       date: `ประมาณ ${fmt(t5)}`, desc: "หากไม่พอใจ อุทธรณ์ต่อศาลแรงงานได้" },
+            { label:"ส่งหนังสือบอกกล่าวถึงนายจ้าง", date:fmt(today), desc:"ส่งไปรษณีย์ลงทะเบียน เก็บใบตอบรับ" },
+            { label:"รอนายจ้างตอบสนอง", date:`ภายใน ${fmt(addDays(today,15))}`, desc:"ถ้าไม่ตอบ ดำเนินการยื่น คร.7 ต่อ" },
+            { label:"ยื่นแบบ คร.7", date:`ประมาณ ${fmt(addDays(today,20))}`, desc:"ยื่นออนไลน์หรือด้วยตนเอง" },
+            { label:"เจ้าหน้าที่นัดไกล่เกลี่ย", date:`ประมาณ ${fmt(addDays(today,80))}`, desc:"นำเอกสารทั้งหมดมาด้วย" },
+            { label:"คำสั่งพนักงานตรวจแรงงาน", date:`ประมาณ ${fmt(addDays(today,170))}`, desc:"หากไม่พอใจ อุทธรณ์ต่อศาลแรงงานได้" },
         ];
 
         const tlContainer = document.getElementById("timelineContainer");
@@ -1224,31 +903,25 @@
         timeline.forEach(t => {
             const div = document.createElement("div");
             div.className = "timeline-item";
-            div.innerHTML = `<div class="tl-dot"></div><div class="tl-content"><div class="tl-label">${t.label}</div><div class="tl-date">${t.date}</div><div class="tl-desc">${t.desc}</div></div>`;
+            div.innerHTML = `<div class="tl-dot"></div><div><div class="tl-label">${t.label}</div><div class="tl-date">${t.date}</div><div class="tl-desc">${t.desc}</div></div>`;
             tlContainer.appendChild(div);
         });
     }
 
-    /* ── Navigation helpers ── */
-    function goBackTo(viewId) {
-        const stepMap = { step1:1, step2:2, step3:3, step4:4, step5:5 };
-        showView(viewId);
-        updateProgress(stepMap[viewId] || 1);
+    function goBackTo(id) {
+        const map={step1:1,step2:2,step3:3,step4:4};
+        showView(id); updateProgress(map[id]||1);
     }
 
     function resetAll() {
-        selectedIssues.clear();
-        checkedEvidence.clear();
-        analysisResult = {};
-        step1Data = {};
-        lastZipBlob = null;
-        document.querySelectorAll(".issue-chip").forEach(el => el.classList.remove("checked"));
-        document.querySelectorAll("input[type=text], input[type=number], textarea, select")
-            .forEach(el => { el.value = el.id === "p_filed_province" ? "กรุงเทพมหานคร" : ""; });
-        document.getElementById("docHave").style.display = "block";
-        document.getElementById("docMissing").style.display = "block";
-        showView("stepWelcome");
-        updateProgress(1);
+        selectedIssues.clear(); checkedEvidence.clear();
+        analysisResult={}; step1Data={}; lastZipBlob=null;
+        document.querySelectorAll(".issue-chip").forEach(el=>el.classList.remove("checked"));
+        document.querySelectorAll("input[type=text],input[type=number],textarea,select")
+            .forEach(el=>{el.value=el.id==="p_filed_province"?"กรุงเทพมหานคร":"";});
+        document.getElementById("docHaveSection").style.display="block";
+        document.getElementById("docMissSection").style.display="block";
+        showView("stepWelcome"); updateProgress(1);
     }
 </script>
 </body>
