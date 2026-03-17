@@ -945,6 +945,25 @@
             <div id="warningBox"></div>
         </div>
 
+        <!-- 2단계: 증거 체크리스트 -->
+        <div class="card" id="evidenceCard" style="animation-delay:.15s">
+            <div class="card-title">📁 เอกสารหลักฐานที่ควรเตรียม</div>
+            <div style="font-size:13px;color:#374151;margin-bottom:12px;line-height:1.7">
+                เตรียมเอกสารเหล่านี้ให้พร้อมก่อนยื่นคำร้อง จะช่วยให้คดีแข็งแกร่งขึ้นมากครับ
+            </div>
+            <div id="evidenceList" style="display:flex;flex-direction:column;gap:8px"></div>
+            <div style="margin-top:14px;padding:12px 14px;background:#fffbeb;border:1.5px solid #fcd34d;border-radius:10px">
+                <div style="font-size:12.5px;font-weight:700;color:#92400e;margin-bottom:6px">⚠️ ไม่มีเอกสาร? ไม่เป็นไรครับ</div>
+                <div style="font-size:12px;color:#78350f;line-height:1.7">
+                    • <strong>พยานบุคคล</strong> — เพื่อนร่วมงานที่รู้เห็นเหตุการณ์<br>
+                    • <strong>LINE / SMS</strong> — ข้อความสั่งงาน แจ้งเลิกจ้าง<br>
+                    • <strong>อีเมลบริษัท</strong> — สัญญา ข้อตกลง แจ้งเตือน<br>
+                    • <strong>บัญชีธนาคาร</strong> — สเตทเมนต์แสดงเงินเดือนที่เคยได้รับ<br>
+                    • <strong>ความจำ</strong> — จดวันที่ เหตุการณ์ คำพูดสำคัญ
+                </div>
+            </div>
+        </div>
+
         <!-- Package offer -->
         <div class="question-card" id="petitionQuestion">
             <h3>📦 ต้องการให้น้องช้างเตรียมเอกสารทั้งหมดให้ไหมครับ?</h3>
@@ -1081,6 +1100,85 @@
                โทร. 1506 กด 3 ฟรีตลอด 24 ชั่วโมง</p>
             <button class="btn-primary" onclick="resetAll()">🔄 เริ่มใหม่</button>
         </div>
+    </div>
+
+    <!-- ══════════════════════════════════════
+         STEP GUIDE — 4단계 제출 가이드 (패키지 다운로드 후)
+    ══════════════════════════════════════ -->
+    <div class="step-view" id="stepGuide">
+
+        <div class="done-card" style="text-align:left;padding:24px 20px">
+            <div style="text-align:center;margin-bottom:16px">
+                <div style="font-size:40px">✅</div>
+                <h3 style="font-size:17px;font-weight:800;color:#111827;margin-bottom:4px">ดาวน์โหลดเรียบร้อยแล้วครับ!</h3>
+                <p style="font-size:13px;color:#6b7280">ไฟล์ ZIP มีเอกสาร 2 ฉบับพร้อมใช้งาน</p>
+            </div>
+        </div>
+
+        <!-- 4단계: 제출 가이드 -->
+        <div class="card" style="animation-delay:.05s">
+            <div class="card-title">📋 ขั้นตอนการยื่นเอกสาร</div>
+
+            <div style="display:flex;flex-direction:column;gap:12px">
+                <div style="display:flex;gap:12px;align-items:flex-start">
+                    <div style="min-width:28px;height:28px;background:var(--green);border-radius:50%;display:flex;align-items:center;justify-content:center;color:white;font-size:13px;font-weight:700;flex-shrink:0">1</div>
+                    <div>
+                        <div style="font-size:13.5px;font-weight:700;color:#111827;margin-bottom:3px">ส่งหนังสือบอกกล่าวถึงนายจ้างก่อน</div>
+                        <div style="font-size:12.5px;color:#6b7280;line-height:1.6">ส่งทางไปรษณีย์ลงทะเบียนตอบรับ เก็บใบตอบรับไว้เป็นหลักฐาน รอ 15 วัน ถ้านายจ้างไม่ตอบสนอง ดำเนินการต่อ</div>
+                    </div>
+                </div>
+                <div style="display:flex;gap:12px;align-items:flex-start">
+                    <div style="min-width:28px;height:28px;background:var(--green);border-radius:50%;display:flex;align-items:center;justify-content:center;color:white;font-size:13px;font-weight:700;flex-shrink:0">2</div>
+                    <div>
+                        <div style="font-size:13.5px;font-weight:700;color:#111827;margin-bottom:3px">ยื่นแบบ คร.7 ที่กรมแรงงาน</div>
+                        <div style="font-size:12.5px;color:#6b7280;line-height:1.6">
+                            <strong>ออนไลน์:</strong> eservice.labour.go.th (24 ชม.)<br>
+                            <strong>ด้วยตนเอง:</strong> สำนักงานสวัสดิการฯ ในจังหวัดที่ทำงาน<br>
+                            <strong>โทรสายด่วน:</strong> 1546 หรือ 1506 กด 3
+                        </div>
+                    </div>
+                </div>
+                <div style="display:flex;gap:12px;align-items:flex-start">
+                    <div style="min-width:28px;height:28px;background:var(--green);border-radius:50%;display:flex;align-items:center;justify-content:center;color:white;font-size:13px;font-weight:700;flex-shrink:0">3</div>
+                    <div>
+                        <div style="font-size:13.5px;font-weight:700;color:#111827;margin-bottom:3px">รอเจ้าหน้าที่นัดหมาย</div>
+                        <div style="font-size:12.5px;color:#6b7280;line-height:1.6">โดยปกติใช้เวลา 30–60 วัน เจ้าหน้าที่จะนัดทั้งสองฝ่ายมาไกล่เกลี่ย นำเอกสารหลักฐานทั้งหมดมาด้วย</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 타임라인 -->
+        <div class="card" style="animation-delay:.1s">
+            <div class="card-title">⏱ ระยะเวลาที่คาดการณ์</div>
+            <div style="display:flex;flex-direction:column;gap:8px">
+                <div style="display:flex;justify-content:space-between;padding:10px 12px;background:#f9fafb;border-radius:8px">
+                    <span style="font-size:13px;color:#374151">ส่งหนังสือบอกกล่าว → รอนายจ้าง</span>
+                    <span style="font-size:13px;font-weight:700;color:#06C755">15 วัน</span>
+                </div>
+                <div style="display:flex;justify-content:space-between;padding:10px 12px;background:#f9fafb;border-radius:8px">
+                    <span style="font-size:13px;color:#374151">ยื่น คร.7 → นัดไกล่เกลี่ย</span>
+                    <span style="font-size:13px;font-weight:700;color:#06C755">30–60 วัน</span>
+                </div>
+                <div style="display:flex;justify-content:space-between;padding:10px 12px;background:#f9fafb;border-radius:8px">
+                    <span style="font-size:13px;color:#374151">ไกล่เกลี่ย → คำสั่งพนักงาน</span>
+                    <span style="font-size:13px;font-weight:700;color:#06C755">30–90 วัน</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- 주의사항 -->
+        <div class="card" style="animation-delay:.15s;background:#fef2f2;border:1.5px solid #fecaca">
+            <div class="card-title" style="color:#991b1b">⚠️ ข้อควรระวังสำคัญ</div>
+            <div style="display:flex;flex-direction:column;gap:8px;font-size:13px;color:#7f1d1d;line-height:1.7">
+                <div>🔴 <strong>อายุความ 2 ปี</strong> — ต้องยื่นคำร้องภายใน 2 ปี นับจากวันที่ถูกละเมิดสิทธิ์</div>
+                <div>🔴 <strong>อย่าลาออกเอง</strong> — ถ้าถูกบังคับให้ลาออก ให้ระบุว่า "ถูกเลิกจ้าง" เท่านั้น</div>
+                <div>🔴 <strong>เก็บหลักฐานทุกอย่าง</strong> — ห้ามลบ LINE ห้ามคืนเอกสาร ก่อนได้รับเงิน</div>
+                <div>🟡 <strong>ไม่ต้องมีทนาย</strong> — ยื่น คร.7 ด้วยตนเองได้ ฟรี ไม่มีค่าใช้จ่าย</div>
+            </div>
+        </div>
+
+        <button class="btn-primary" onclick="resetAll()" style="margin-top:8px">🔄 เริ่มใหม่</button>
     </div>
 
 </div><!-- /main -->
@@ -1244,9 +1342,72 @@
                 `<div class="warning-box">⚠️ <span>${data.warning}</span></div>`;
         }
 
+        // Render evidence checklist
+        renderEvidenceChecklist(Array.from(selectedIssues));
+
         // Show/hide petition question based on recommendation
         document.getElementById("petitionQuestion").style.display =
             data.recommend_petition === false ? "none" : "block";
+    }
+
+    /* ─────────────────────────────────────────────
+       Evidence Checklist (by issue type)
+    ───────────────────────────────────────────── */
+    const EVIDENCE_MAP = {
+        wrongful_termination: [
+            "📄 หนังสือแจ้งเลิกจ้าง (ถ้ามี)",
+            "📋 สัญญาจ้างงาน",
+            "💳 สลิปเงินเดือน ย้อนหลัง 3–6 เดือน",
+            "📱 LINE/SMS ที่นายจ้างแจ้งเลิกจ้าง",
+        ],
+        forced_resignation: [
+            "📱 LINE/SMS ที่ถูกกดดันให้ลาออก",
+            "📝 บันทึกบทสนทนา คำพูดที่ถูกข่มขู่",
+            "👥 ชื่อพยานที่รู้เห็นเหตุการณ์",
+            "💳 สลิปเงินเดือน",
+        ],
+        wage_arrears: [
+            "💳 สลิปเงินเดือนที่ยังไม่ได้รับ",
+            "🏦 สเตทเมนต์บัญชีธนาคาร",
+            "📱 LINE/Email ที่นายจ้างยืนยันยอดค้างจ่าย",
+        ],
+        no_overtime_pay: [
+            "⏰ บันทึกเวลาทำงาน (ถ้ามี)",
+            "📱 LINE/Email สั่งให้ทำงานล่วงเวลา",
+            "💳 สลิปเงินเดือนที่ไม่มีค่า OT",
+        ],
+        unused_leave: [
+            "📅 ใบลาหรือบันทึกวันลาที่ได้รับอนุมัติ",
+            "📋 ระเบียบบริษัทเรื่องวันลา",
+            "💳 สลิปเงินเดือน",
+        ],
+        unfair_dismissal: [
+            "📄 หนังสือแจ้งเลิกจ้างพร้อมเหตุผล",
+            "📋 ข้อบังคับการทำงานของบริษัท",
+            "📝 ใบเตือน (ถ้ามี) เพื่อโต้แย้ง",
+            "👥 พยานที่รู้เห็นเหตุการณ์",
+        ],
+    };
+
+    function renderEvidenceChecklist(issues) {
+        const list = document.getElementById("evidenceList");
+        list.innerHTML = "";
+        const seen = new Set();
+        const items = [];
+        (issues || []).forEach(issue => {
+            (EVIDENCE_MAP[issue] || []).forEach(item => {
+                if (!seen.has(item)) { seen.add(item); items.push(item); }
+            });
+        });
+        if (items.length === 0) {
+            items.push("📋 สัญญาจ้างงาน", "💳 สลิปเงินเดือน", "📱 หลักฐานการสื่อสารกับนายจ้าง");
+        }
+        items.forEach(item => {
+            const div = document.createElement("div");
+            div.style.cssText = "display:flex;align-items:center;gap:10px;padding:9px 12px;background:#f9fafb;border:1.5px solid #e5e7eb;border-radius:8px;font-size:13px;color:#374151";
+            div.innerHTML = `<input type="checkbox" style="width:16px;height:16px;accent-color:var(--green);flex-shrink:0"> <span>${item}</span>`;
+            list.appendChild(div);
+        });
     }
 
     /* ─────────────────────────────────────────────
@@ -1335,8 +1496,12 @@
             a.click();
             URL.revokeObjectURL(url);
 
-            btn.textContent = "✅ ดาวน์โหลดเรียบร้อยแล้ว!";
+            btn.textContent = "✅ ดาวน์โหลดเรียบร้อย!";
             btn.style.background = "var(--green-dark)";
+            setTimeout(() => {
+                showView("stepGuide");
+                updateProgress(3);
+            }, 800);
 
         } catch (e) {
             alert("❌ เกิดข้อผิดพลาดในการสร้างเอกสาร: " + e.message);
