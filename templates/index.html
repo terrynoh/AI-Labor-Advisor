@@ -7,7 +7,12 @@
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&family=Noto+Sans+Thai:wght@400;500;600;700&display=swap');
         :root {
+            /* Step 1 - 밝은 초록 */
             --green:#06C755; --green-dark:#04a045; --green-light:#e6faf0; --green-mid:#c3f0d6;
+            /* Step 2 - 딥 그린 */
+            --deep:#0A5C36; --deep-dark:#074a2b; --deep-light:#f0f5f2; --deep-mid:#d4e8db;
+            /* Step 결제 - 네이비 */
+            --navy:#0f2d4a; --navy-dark:#0a1f33;
             --purple:#7c3aed; --red:#ef4444; --red-light:#fef2f2;
             --amber:#f59e0b; --amber-light:#fffbeb; --blue:#3b82f6; --blue-light:#eff6ff;
             --gray-50:#f9fafb; --gray-100:#f3f4f6; --gray-200:#e5e7eb;
@@ -15,7 +20,8 @@
             --radius:14px; --shadow:0 4px 24px rgba(0,0,0,0.10); --shadow-sm:0 2px 8px rgba(0,0,0,0.08);
         }
         * { box-sizing:border-box; margin:0; padding:0; }
-        body { font-family:'Sarabun','Noto Sans Thai',sans-serif; background:#dff0e8; min-height:100vh; display:flex; flex-direction:column; max-width:560px; margin:0 auto; box-shadow:0 0 60px rgba(0,0,0,0.12); }
+        body { font-family:'Sarabun','Noto Sans Thai',sans-serif; background:#dff0e8; min-height:100vh; display:flex; flex-direction:column; max-width:560px; margin:0 auto; box-shadow:0 0 60px rgba(0,0,0,0.12); transition:background .4s; }
+        body.deep-bg { background:#edf3ef; }
 
         /* Header */
         .header { background:var(--green); color:white; padding:14px 18px; display:flex; align-items:center; justify-content:space-between; box-shadow:0 3px 14px rgba(6,199,85,0.38); flex-shrink:0; position:sticky; top:0; z-index:100; }
@@ -24,6 +30,8 @@
         .header-sub { font-size:11px; opacity:.88; margin-top:1px; }
         .reset-btn { background:rgba(255,255,255,0.2); border:1.5px solid rgba(255,255,255,0.45); color:white; padding:6px 14px; border-radius:20px; cursor:pointer; font-size:12px; font-weight:700; font-family:inherit; transition:background .2s; white-space:nowrap; }
         .reset-btn:hover { background:rgba(255,255,255,0.35); }
+        .header.deep { background:var(--deep); box-shadow:0 3px 14px rgba(10,92,54,0.4); }
+        .header.navy { background:var(--navy); box-shadow:0 3px 14px rgba(15,45,74,0.4); }
 
         /* Progress */
         .progress-bar { background:white; padding:12px 16px 8px; border-bottom:1px solid var(--gray-200); flex-shrink:0; }
@@ -92,7 +100,8 @@
         .btn-danger { flex:1; background:white; color:var(--red); border:1.5px solid var(--red); padding:13px; border-radius:12px; font-size:14px; font-weight:700; font-family:inherit; cursor:pointer; transition:all .2s; }
         .btn-danger:hover { background:var(--red-light); }
         .btn-row { display:flex; gap:10px; margin-top:6px; }
-        .btn-pay { width:100%; background:linear-gradient(135deg,#7c3aed,#a855f7); color:white; border:none; padding:16px; border-radius:14px; font-size:16px; font-weight:800; font-family:inherit; cursor:pointer; box-shadow:0 6px 20px rgba(124,58,237,0.4); transition:transform .1s; display:flex; align-items:center; justify-content:center; gap:8px; margin-top:8px; }
+        .btn-pay { width:100%; background:var(--navy); color:white; border:none; padding:16px; border-radius:14px; font-size:16px; font-weight:800; font-family:inherit; cursor:pointer; box-shadow:0 6px 20px rgba(15,45,74,0.35); transition:transform .1s,background .2s; display:flex; align-items:center; justify-content:center; gap:8px; margin-top:8px; }
+        .btn-pay:hover { background:var(--navy-dark); }
         .btn-pay:active { transform:scale(0.98); }
 
         /* Loading */
@@ -302,62 +311,103 @@
     <div class="loading-card"><div class="spinner"></div><p>น้องช้างกำลังวิเคราะห์ข้อมูล…</p></div>
 </div>
 
-<!-- STEP 2 — Partial result + payment offer -->
+<!-- STEP 2 — Full result + package offer -->
 <div class="step-view" id="step2">
 
-    <!-- ยอดเงินที่อาจได้รับ -->
-    <div class="amount-preview">
-        <div class="amount-label">📊 ผลการวิเคราะห์สิทธิ์ของคุณ<br><span style="font-size:11px;color:#6b7280">(คำนวณตามกฎหมายแรงงานไทย)</span></div>
-        <div style="font-size:13px;color:#166534;margin-bottom:6px">💰 ขั้นต่ำที่คุณควรได้รับ</div>
-        <div class="amount-big" id="totalAmountDisplay">฿0</div>
-        <div class="amount-sub" id="totalAmountNote">✔ คำนวณตาม พ.ร.บ.คุ้มครองแรงงาน 2541 · ✔ ตรงตามมาตรฐานสำนักงานแรงงาน</div>
-        <!-- Locked details -->
-        <div class="amount-locked">
-            <div class="locked-item"><span class="locked-icon">🔒</span><span style="font-size:12px;color:#9ca3af">รายละเอียดการคำนวณ</span><div class="blur-text"></div></div>
-            <div class="locked-item"><span class="locked-icon">🔒</span><span style="font-size:12px;color:#9ca3af">มาตรากฎหมายที่อ้างอิง</span><div class="blur-text"></div></div>
-            <div class="locked-item"><span class="locked-icon">🔒</span><span style="font-size:12px;color:#9ca3af">ขั้นตอนการเรียกร้อง</span><div class="blur-text"></div></div>
+    <!-- 분석 결과 전체 공개 -->
+    <div class="card" style="border:1.5px solid var(--deep-mid)">
+        <div class="legal-badges">
+            <span class="legal-badge">✔ คำนวณตาม พ.ร.บ.คุ้มครองแรงงาน 2541</span>
+            <span class="legal-badge" id="legalMatraStep2"></span>
+        </div>
+
+        <!-- 총 금액 강조 -->
+        <div style="background:var(--deep-light);border:1.5px solid var(--deep-mid);border-radius:12px;padding:16px 20px;text-align:center;margin-bottom:14px">
+            <div style="font-size:12px;color:#0A5C36;font-weight:600;margin-bottom:4px">💰 ขั้นต่ำที่คุณมีสิทธิ์เรียกร้องตามกฎหมาย</div>
+            <div style="font-size:34px;font-weight:800;color:var(--deep);letter-spacing:-1px" id="totalAmountDisplay">฿0</div>
+            <div style="font-size:11px;color:#6b7280;margin-top:4px" id="totalAmountNote">ตาม พ.ร.บ.คุ้มครองแรงงาน 2541 · มาตรา 118</div>
+        </div>
+
+        <!-- 확정/가능/추정 분류 -->
+        <div id="compConfirmedSection" class="comp-section">
+            <div class="comp-section-title comp-confirmed">✅ ได้รับแน่นอน (ตามกฎหมาย)</div>
+            <div class="comp-grid" id="compConfirmedGrid2"></div>
+        </div>
+        <div id="compPossibleSection" class="comp-section">
+            <div class="comp-section-title comp-possible">⚠️ อาจมีสิทธิ์ (ขึ้นอยู่กับการพิจารณา)</div>
+            <div class="comp-grid" id="compPossibleGrid2"></div>
+        </div>
+        <div id="compEstimatedSection" class="comp-section">
+            <div class="comp-section-title comp-estimated">📊 ประมาณการ (ต้องพิสูจน์เพิ่มเติม)</div>
+            <div class="comp-grid" id="compEstimatedGrid2"></div>
+        </div>
+
+        <div style="background:#fef9c3;border-radius:8px;padding:10px 12px;font-size:12px;color:#713f12;line-height:1.6;margin-top:4px">
+            ⚠️ ตัวเลขข้างต้นเป็นการประมาณการ จำนวนที่ได้รับจริงขึ้นอยู่กับคำพิจารณาของพนักงานตรวจแรงงาน
+        </div>
+
+        <div style="margin-top:10px" id="urgencyBadge2"></div>
+    </div>
+
+    <!-- 진단 요약 -->
+    <div class="card">
+        <div class="card-title">ผลการวินิจฉัย</div>
+        <div style="background:var(--blue-light);border:1.5px solid #bfdbfe;border-radius:12px;padding:14px;font-size:14px;color:#1e40af;line-height:1.7" id="diagnosisStep2"></div>
+        <div style="margin-top:12px">
+            <div style="font-size:12.5px;font-weight:700;color:var(--gray-700);margin-bottom:8px">สิทธิ์ที่คุณได้รับ</div>
+            <ul style="list-style:none;display:flex;flex-direction:column;gap:6px" id="rightsStep2"></ul>
         </div>
     </div>
 
-    <!-- Urgency badge -->
-    <div style="text-align:center;margin-bottom:14px" id="urgencyBadge2"></div>
-
-    <!-- Payment offer -->
-    <div class="card" style="border:2px solid #a855f7;background:linear-gradient(135deg,#faf5ff,#ede9fe)">
+    <!-- 패키지 오퍼 -->
+    <div class="card" style="border:2px solid var(--deep);background:linear-gradient(135deg,var(--deep-light),#e8f3ec)">
         <div style="text-align:center;margin-bottom:16px">
-            <div style="font-size:28px;margin-bottom:8px">📄</div>
-            <div style="font-size:16px;font-weight:800;color:#3b0764;margin-bottom:6px">สร้างเอกสารและยื่นคำร้องได้ทันที</div>
-            <div style="font-size:13px;color:#6d28d9;line-height:1.6">จากผลการวิเคราะห์ของคุณ น้องช้างจะสร้างเอกสาร<br>ตามมาตรฐานสำนักงานแรงงานให้โดยอัตโนมัติ</div>
+            <div style="font-size:13px;font-weight:700;color:var(--deep);margin-bottom:4px">📋 เพื่อยื่นคำร้องกับกรมแรงงานได้จริง</div>
+            <div style="font-size:22px;font-weight:800;color:var(--navy);line-height:1.3">น้องช้างช่วยเตรียม<br>แพ็กเกจเอกสารครบชุดให้ได้ครับ</div>
         </div>
 
-        <!-- Package contents -->
-        <div style="background:white;border-radius:10px;padding:14px;margin-bottom:14px">
-            <div style="font-size:12px;color:#374151;display:flex;flex-direction:column;gap:8px">
-                <div style="display:flex;align-items:flex-start;gap:8px"><span>✅</span><div><strong>หนังสือบอกกล่าวทวงถาม</strong><div style="font-size:11.5px;color:#6b7280;margin-top:1px">ส่งถึงนายจ้างก่อนยื่น คร.7</div></div></div>
-                <div style="display:flex;align-items:flex-start;gap:8px"><span>✅</span><div><strong>แบบฟอร์ม คร.7</strong><div style="font-size:11.5px;color:#6b7280;margin-top:1px">ยื่นกรมสวัสดิการและคุ้มครองแรงงาน</div></div></div>
-                <div style="display:flex;align-items:flex-start;gap:8px"><span>✅</span><div><strong>รายละเอียดการคำนวณ + มาตรากฎหมาย</strong><div style="font-size:11.5px;color:#6b7280;margin-top:1px">อ้างอิงตาม พ.ร.บ.คุ้มครองแรงงาน 2541</div></div></div>
-                <div style="display:flex;align-items:flex-start;gap:8px"><span>✅</span><div><strong>คู่มือขั้นตอนการยื่น + Timeline</strong><div style="font-size:11.5px;color:#6b7280;margin-top:1px">พร้อมวันที่โดยประมาณ</div></div></div>
+        <!-- 패키지 내용 -->
+        <div style="background:white;border-radius:12px;padding:14px;margin-bottom:14px;border:1px solid var(--deep-mid)">
+            <div style="font-size:11.5px;font-weight:700;color:var(--deep);margin-bottom:10px;text-transform:uppercase;letter-spacing:0.5px">สิ่งที่จะได้รับ</div>
+            <div style="display:flex;flex-direction:column;gap:10px">
+                <div style="display:flex;gap:10px;align-items:flex-start">
+                    <div style="width:28px;height:28px;background:var(--deep-light);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0">📋</div>
+                    <div><div style="font-size:13px;font-weight:700;color:#111827">แบบฟอร์ม คร.7</div><div style="font-size:11.5px;color:#6b7280;margin-top:1px">คำร้องต่อพนักงานตรวจแรงงาน — ยื่นสำนักงานแรงงานได้ทันที</div></div>
+                </div>
+                <div style="display:flex;gap:10px;align-items:flex-start">
+                    <div style="width:28px;height:28px;background:var(--deep-light);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0">📨</div>
+                    <div><div style="font-size:13px;font-weight:700;color:#111827">หนังสือบอกกล่าวทวงถาม</div><div style="font-size:11.5px;color:#6b7280;margin-top:1px">ส่งถึงนายจ้างก่อนยื่น เพิ่มน้ำหนักในคดี</div></div>
+                </div>
+                <div style="display:flex;gap:10px;align-items:flex-start">
+                    <div style="width:28px;height:28px;background:var(--deep-light);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0">📁</div>
+                    <div><div style="font-size:13px;font-weight:700;color:#111827">คู่มือเตรียมหลักฐาน</div><div style="font-size:11.5px;color:#6b7280;margin-top:1px">รายการเอกสารที่ต้องเตรียม พร้อมเหตุผลแต่ละชิ้น</div></div>
+                </div>
+                <div style="display:flex;gap:10px;align-items:flex-start">
+                    <div style="width:28px;height:28px;background:var(--deep-light);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0">🗓</div>
+                    <div><div style="font-size:13px;font-weight:700;color:#111827">คู่มือขั้นตอน + Timeline</div><div style="font-size:11.5px;color:#6b7280;margin-top:1px">ขั้นตอนการยื่น พร้อมวันที่โดยประมาณ</div></div>
+                </div>
             </div>
         </div>
 
-        <!-- Legal trust badges -->
+        <!-- 신뢰 배지 -->
         <div class="legal-badges" style="justify-content:center;margin-bottom:14px">
-            <span class="legal-badge">✔ อ้างอิงตาม พ.ร.บ.2541</span>
+            <span class="legal-badge">✔ อ้างอิง พ.ร.บ.2541</span>
             <span class="legal-badge">✔ ใช้ยื่นสำนักงานแรงงานได้จริง</span>
             <span class="legal-badge">✔ รูปแบบมาตรฐานราชการ</span>
         </div>
 
         <button class="btn-pay" onclick="proceedToPay()">
-            👉 สร้างเอกสารและดำเนินการต่อ — XXX ฿
+            📦 เริ่มเตรียมแพ็กเกจเอกสาร — XXX ฿
         </button>
-        <div style="text-align:center;margin-top:10px;display:flex;flex-direction:column;gap:4px">
-            <span style="font-size:12px;color:#6d28d9">✔ ชำระครั้งเดียว ไม่มีค่าใช้จ่ายเพิ่ม</span>
-            <span style="font-size:12px;color:#6d28d9">✔ ดาวน์โหลดได้ทันที พร้อมยื่นได้เลย</span>
+        <div style="display:flex;justify-content:center;gap:16px;margin-top:10px">
+            <span style="font-size:11.5px;color:var(--deep)">✔ ชำระครั้งเดียว</span>
+            <span style="font-size:11.5px;color:var(--deep)">✔ ไม่มีค่าใช้จ่ายเพิ่ม</span>
+            <span style="font-size:11.5px;color:var(--deep)">✔ พร้อมยื่นได้ทันที</span>
         </div>
     </div>
 
     <div class="btn-row">
-        <button class="btn-danger" onclick="answerNo()">ไม่ต้องการ</button>
+        <button class="btn-danger" onclick="answerNo()">ไม่ต้องการในขณะนี้</button>
     </div>
 </div>
 
@@ -625,6 +675,20 @@
         document.getElementById("mainContent").scrollTop = 0;
         const hideProgress = ["stepWelcome","stepLoading","stepPdfLoading","stepDone"];
         document.getElementById("progressBar").style.display = hideProgress.includes(id) ? "none" : "block";
+
+        // 3단계 색상 전환
+        const header = document.querySelector(".header");
+        const body = document.body;
+        if (["stepWelcome","step1","stepLoading"].includes(id)) {
+            header.className = "header";
+            body.className = "";
+        } else if (["step2","step3","stepPdfLoading"].includes(id)) {
+            header.className = "header deep";
+            body.classList.add("deep-bg");
+        } else if (["step4","stepDone"].includes(id)) {
+            header.className = "header deep";
+            body.classList.add("deep-bg");
+        }
     }
 
     function startForm() { showView("step1"); updateProgress(1); }
@@ -672,13 +736,67 @@
     }
 
     function renderStep2Preview() {
-        // Show total amount only
-        const total = (analysisResult.severance_amount||0) + (analysisResult.leave_payout||0);
+        const data = analysisResult;
+        const total = (data.severance_amount||0) + (data.leave_payout||0);
         document.getElementById("totalAmountDisplay").textContent = "฿" + total.toLocaleString();
 
-        const urgencyMap = { high:["🔴 เร่งด่วนสูง","urgency-high"], medium:["🟡 เร่งด่วนปานกลาง","urgency-medium"], low:["🟢 ไม่เร่งด่วน","urgency-low"] };
-        const [urgText] = urgencyMap[analysisResult.urgency] || urgencyMap.medium;
-        document.getElementById("urgencyBadge2").innerHTML = `<span style="display:inline-flex;align-items:center;gap:5px;padding:4px 12px;border-radius:20px;font-size:12px;font-weight:700;background:#fef2f2;color:#ef4444">${urgText}</span>`;
+        // Legal matra
+        if (data.legal_basis) {
+            const matra = data.legal_basis.match(/มาตรา[\s\d,]+/)?.[0] || "";
+            const el = document.getElementById("legalMatraStep2");
+            if (el && matra) el.textContent = "✔ " + matra;
+        }
+
+        // Urgency
+        const urgencyMap = {
+            high:  ["🔴 เร่งด่วนสูง",  "#fef2f2","#ef4444"],
+            medium:["🟡 ปานกลาง",       "#fffbeb","#b45309"],
+            low:   ["🟢 ไม่เร่งด่วน",   "#f0fdf4","#166534"],
+        };
+        const [urgText, urgBg, urgColor] = urgencyMap[data.urgency] || urgencyMap.medium;
+        document.getElementById("urgencyBadge2").innerHTML =
+            `<span style="display:inline-flex;align-items:center;gap:5px;padding:4px 14px;border-radius:20px;font-size:12px;font-weight:700;background:${urgBg};color:${urgColor}">${urgText}</span>`;
+
+        // Diagnosis
+        document.getElementById("diagnosisStep2").textContent = data.diagnosis || "";
+
+        // Rights
+        const rList = document.getElementById("rightsStep2");
+        rList.innerHTML = "";
+        (data.rights||[]).forEach(r => {
+            const li = document.createElement("li");
+            li.style.cssText = "display:flex;align-items:flex-start;gap:8px;font-size:13px;color:#374151;line-height:1.6";
+            li.innerHTML = `<span style="flex-shrink:0">✅</span>${r}`;
+            rList.appendChild(li);
+        });
+
+        // Compensation 3 categories
+        const issues = Array.from(selectedIssues);
+        const confirmed = [], possible = [], estimated = [];
+        if ((data.severance_amount||0) > 0) confirmed.push({ label:"ค่าชดเชยการเลิกจ้าง", amount:data.severance_amount, detail:data.severance_detail, note:"มาตรา 118" });
+        if ((data.leave_payout||0) > 0)     confirmed.push({ label:"ค่าวันลาที่ยังไม่ได้ใช้", amount:data.leave_payout, detail:`${step1Data.unused_leave_days} วัน`, note:"มาตรา 67" });
+        if (issues.some(i=>["wrongful_termination","forced_resignation","unfair_dismissal"].includes(i))) {
+            possible.push({ label:"ค่าจ้างแทนการบอกกล่าว", amount:step1Data.monthly_salary||0, detail:"1 เดือน", note:"ขึ้นอยู่กับกรณี" });
+        }
+        if (issues.includes("unfair_dismissal"))  estimated.push({ label:"ค่าเสียหาย เลิกจ้างไม่เป็นธรรม", amount:null, detail:"ขึ้นอยู่กับคำพิจารณา", note:"สูงสุด 180 วัน" });
+        if (issues.includes("wage_arrears"))       estimated.push({ label:"ค่าจ้างค้าง + ดอกเบี้ย 15%", amount:null, detail:"ตามจำนวนจริง", note:"ต้องพิสูจน์ด้วยสลิป" });
+        if (issues.includes("no_overtime_pay"))    estimated.push({ label:"ค่าล่วงเวลาค้างชำระ", amount:null, detail:"ตามชั่วโมงจริง", note:"ต้องพิสูจน์ด้วยบันทึก" });
+
+        function renderGrid(items, type, gridId, sectionId) {
+            const grid = document.getElementById(gridId);
+            if (!grid) return;
+            grid.innerHTML = "";
+            if (!items.length) { const sec = document.getElementById(sectionId); if(sec) sec.style.display="none"; return; }
+            items.forEach(item => {
+                const div = document.createElement("div");
+                div.className = `comp-item ${type}`;
+                div.innerHTML = `<div class="comp-label">${item.label}</div><div class="comp-amount ${type}">${item.amount!=null?"฿"+item.amount.toLocaleString():"ขึ้นอยู่กับกรณี"}</div>${item.detail?`<div class="comp-detail">${item.detail}</div>`:""}${item.note?`<div class="comp-note">${item.note}</div>`:""}`;
+                grid.appendChild(div);
+            });
+        }
+        renderGrid(confirmed,"confirmed","compConfirmedGrid2","compConfirmedSection");
+        renderGrid(possible, "possible", "compPossibleGrid2", "compPossibleSection");
+        renderGrid(estimated,"estimated","compEstimatedGrid2","compEstimatedSection");
     }
 
     function proceedToPay() {
