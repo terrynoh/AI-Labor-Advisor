@@ -101,14 +101,17 @@ def line_webhook():
 
     print("🔥 LINE BODY:", body)
 
-    # 🔥 Verify 요청 우회 처리
+    # Verify 요청 대응
     if not signature:
         return "OK", 200
 
     if not verify_signature(body, signature):
         return "Invalid signature", 400
 
-    handle_message(body)
+    try:
+        handle_message(body)
+    except Exception as e:
+        print("❌ handle_message error:", e)
 
     return "OK", 200
 
