@@ -4,7 +4,8 @@ import tempfile
 from flask import Flask, request, jsonify, render_template, session, send_file
 from chatbot import chat, get_initial_message, analyze_situation
 from calculators import calculate_severance, calculate_leave
-from pdf_generator import generate_kor7_pdf
+from pdf_generator import generate_kor7_pdf, generate_demand_letter_pdf
+from chatbot import generate_demand_letter_body
 
 app = Flask(__name__)
 app.secret_key = os.environ.get("SECRET_KEY", "dev-secret-key")
@@ -174,6 +175,96 @@ def extract_pdf_data_from_messages(messages):
         return json.loads(text)
     except:
         return {}
+
+
+# ─────────────────────────────────────────────────────────────────
+#  /generate-package  — 패키지 생성 엔드포인트
+#  프론트에서 결제 완료 후 호출
+# ─────────────────────────────────────────────────────────────────
+
+@app.route("/generate-package", methods=["POST"])
+def generate_package():
+    """
+    Request body (JSON):
+    {
+        "case_data": {
+            "complainant_name": "...",
+            "age": "...",
+            "address": "...",
+            "phone": "...",
+            "employer_name": "...",
+            "employer_address": "...",
+            "position": "...",
+            "start_date": "...",
+            "end_date": "...",
+            "wage_rate": 45000,
+            "issues": ["wrongful_termination", ...],
+            "severance_amount": 270000,
+            "leave_payout": 6000,
+            "notice_pay": 45000,
+            "wage_owed": 0,
+            "ot_amount": 0,
+            "total_amount": 321000,
+            "deadline": 15
+        }
+    }
+
+    Response: JSON with download URLs for generated PDFs
+    """
+    import os, tempfile, zipfile
+    from flask import send_file
+
+    try:
+        body      = request.get_json(force=True)
+        case_data = body.get("case_data", {})
+
+        if not case_data.get("complainant_name"):
+            return jsonify({"error": "complainant_name required"}), 400
+
+        tmp_dir = tempfile.mkdtemp()
+
+        # ── 1. 내용증명 항의서 생성 ──────────────────────────────────
+        letter_body = generate_demand_letter_body(case_data)
+        demand_pdf_path = os.path.join(tmp_dir, "01_demand_letter.pdf")
+        generate_demand_letter_pdf(case_data, letter_body, demand_pdf_path)
+
+        # ── 2. คร.7 진정서 생성 ──────────────────────────────────────
+        kor7_data = {
+            "complainant_name":  case_data.get("complainant_name"),
+            "age":               case_data.get("age"),
+            "address_no":        case_data.get("address"),
+            "phone":             case_data.get("phone"),
+            "employer_name":     case_data.get("employer_name"),
+            "employer_address_no": case_data.get("employer_address"),
+            "position":          case_data.get("position"),
+            "start_date":        case_data.get("start_date"),
+            "end_date":          case_data.get("end_date"),
+            "wage_rate":         case_data.get("wage_rate"),
+            "severance":         case_data.get("severance_amount"),
+            "notice_pay":        case_data.get("notice_pay"),
+            "wage_owed":         case_data.get("wage_owed"),
+            "ot_amount":         case_data.get("ot_amount"),
+            "filed_province":    case_data.get("filed_province", "กรุงเทพมหานคร"),
+        }
+        kor7_pdf_path = os.path.join(tmp_dir, "02_kor7_petition.pdf")
+        generate_kor7_pdf(kor7_data, kor7_pdf_path)
+
+        # ── 3. ZIP으로 묶기 ──────────────────────────────────────────
+        zip_path = os.path.join(tmp_dir, "labor_package.zip")
+        with zipfile.ZipFile(zip_path, "w") as zf:
+            zf.write(demand_pdf_path, "01_หนังสือบอกกล่าว.pdf")
+            zf.write(kor7_pdf_path,   "02_คร7_คำร้อง.pdf")
+
+        return send_file(
+            zip_path,
+            mimetype="application/zip",
+            as_attachment=True,
+            download_name="labor_package.zip"
+        )
+
+    except Exception as e:
+        print(f"[generate_package ERROR] {e}")
+        return jsonify({"error": str(e)}), 500
 
 
 if __name__ == "__main__":

@@ -168,3 +168,86 @@ def analyze_situation(form_data: dict) -> dict:
     analysis["leave_payout"]     = leave_payout
 
     return analysis
+
+
+DEMAND_LETTER_PROMPT = """คุณเป็นทนายความผู้เชี่ยวชาญกฎหมายแรงงานไทย
+เขียนเนื้อหาหนังสือบอกกล่าวทวงถามอย่างเป็นทางการ เป็นภาษาไทย
+
+ข้อมูลคดี:
+{case_info}
+
+กฎการเขียน:
+- ใช้ภาษาทางการ กระชับ ชัดเจน
+- อ้างกฎหมายที่เกี่ยวข้องพร้อมมาตราให้ชัดเจน
+- ระบุจำนวนเงินที่เรียกร้องแต่ละรายการ
+- ไม่ต้องมี opening/closing paragraph (มีแล้วในระบบ)
+- ตอบเฉพาะเนื้อหาตรงกลาง 3-5 ย่อหน้า ไม่มีหัวข้อ
+- ห้ามใช้ bullet points หรือ numbering
+- เขียนต่อเนื่องเป็น paragraph"""
+
+
+def generate_demand_letter_body(case_data: dict) -> str:
+    """
+    Use Claude to generate the body text of the demand letter.
+
+    case_data keys:
+        complainant_name, employer_name,
+        start_date, end_date, position, wage_rate,
+        issues (list),
+        severance_amount (float),
+        leave_payout (float),
+        wage_owed (float),
+        ot_amount (float),
+        notice_pay (float),
+        total_amount (float)
+
+    returns: Thai body text (str)
+    """
+    issues_th = ", ".join(ISSUE_LABELS.get(i, i) for i in case_data.get("issues", []))
+
+    # Build itemized claim list
+    claims = []
+    if case_data.get("severance_amount"):
+        claims.append(f"ค่าชดเชยการเลิกจ้าง {case_data['severance_amount']:,.2f} บาท")
+    if case_data.get("notice_pay"):
+        claims.append(f"ค่าจ้างแทนการบอกกล่าวล่วงหน้า {case_data['notice_pay']:,.2f} บาท")
+    if case_data.get("wage_owed"):
+        claims.append(f"ค่าจ้างค้างชำระ {case_data['wage_owed']:,.2f} บาท")
+    if case_data.get("leave_payout"):
+        claims.append(f"ค่าวันลาที่ยังไม่ได้ใช้ {case_data['leave_payout']:,.2f} บาท")
+    if case_data.get("ot_amount"):
+        claims.append(f"ค่าล่วงเวลา {case_data['ot_amount']:,.2f} บาท")
+
+    claims_text = "\n".join(f"- {c}" for c in claims) if claims else "- ตามที่ระบุในคดี"
+    total = case_data.get("total_amount", 0)
+
+    case_info = (
+        f"ชื่อลูกจ้าง: {case_data.get('complainant_name', '...')}\n"
+        f"ชื่อนายจ้าง: {case_data.get('employer_name', '...')}\n"
+        f"ตำแหน่ง: {case_data.get('position', '...')}\n"
+        f"อัตราค่าจ้าง: {case_data.get('wage_rate', '...')} บาท/เดือน\n"
+        f"ระยะเวลาทำงาน: {case_data.get('start_date', '...')} - {case_data.get('end_date', '...')}\n"
+        f"ปัญหาที่พบ: {issues_th}\n"
+        f"รายการเรียกร้อง:\n{claims_text}\n"
+        f"รวมทั้งสิ้น: {total:,.2f} บาท"
+    )
+
+    prompt = DEMAND_LETTER_PROMPT.format(case_info=case_info)
+
+    try:
+        response = client.messages.create(
+            model="claude-haiku-4-5-20251001",
+            max_tokens=2048,
+            messages=[{"role": "user", "content": prompt}]
+        )
+        return response.content[0].text.strip()
+    except Exception as e:
+        print(f"[generate_demand_letter_body ERROR] {e}")
+        # Fallback template
+        return (
+            f"ข้าพเจ้าขอแจ้งให้ทราบว่า {case_data.get('employer_name', 'นายจ้าง')} "
+            f"ได้กระทำการอันเป็นการละเมิดสิทธิ์ของข้าพเจ้า ได้แก่ {issues_th} "
+            f"ซึ่งเป็นการฝ่าฝืนพระราชบัญญัติคุ้มครองแรงงาน พ.ศ. 2541\n\n"
+            f"ข้าพเจ้าขอเรียกร้องให้ชำระเงินรวมทั้งสิ้น {total:,.2f} บาท "
+            f"ตามรายการที่ระบุด้านล่าง"
+        )

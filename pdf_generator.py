@@ -258,6 +258,174 @@ def generate_kor7_pdf(data: dict, output_path: str) -> str:
 
     # ── Convert to PDF via LibreOffice ─────────────────────────────────────
     try:
+        import = subprocess.run(
+            [LIBREOFFICE_CMD, "--headless", "--convert-to", "pdf",
+             "--outdir", tmp_dir, tmp_docx],
+            capture_output=True, text=True, timeout=60
+        )
+        if import.returncode != 0:
+            raise RuntimeError(f"LibreOffice error: {import.stderr}")
+    except FileNotFoundError:
+        raise RuntimeError(
+            f"LibreOffice not found at: {LIBREOFFICE_CMD}"
+        )
+
+    tmp_pdf = os.path.join(tmp_dir, "filled_kor7.pdf")
+    if not os.path.exists(tmp_pdf):
+        raise RuntimeError("PDF conversion failed — output file not found")
+
+    shutil.move(tmp_pdf, output_path)
+    shutil.rmtree(tmp_dir, ignore_errors=True)
+    return output_path
+
+
+# ── 추가 import (pdf_generator.py 상단에도 추가 필요) ──────────────────────
+# from docx.shared import Pt, Cm, RGBColor
+# from docx.enum.text import WD_ALIGN_PARAGRAPH
+
+NOTICE_LETTER_TEMPLATE = """หนังสือบอกกล่าวทวงถามและเรียกร้องสิทธิ์
+(หนังสือรับรองไปรษณีย์)
+
+วันที่ {date}
+
+เรื่อง  ขอเรียกร้องสิทธิ์ตามกฎหมายคุ้มครองแรงงาน
+
+เรียน  {employer_name}
+       {employer_address}
+
+ข้าพเจ้า {complainant_name} อายุ {age} ปี อยู่บ้านเลขที่ {address} โทรศัพท์ {phone}
+เคยทำงานกับ{employer_name} ตำแหน่ง {position} ตั้งแต่วันที่ {start_date} ถึง {end_date}
+ได้รับค่าจ้างอัตรา {wage_rate} บาทต่อเดือน
+
+{letter_body}
+
+ข้าพเจ้าขอให้ท่านดำเนินการชำระเงินดังกล่าวภายใน {deadline} วัน นับแต่วันที่ได้รับหนังสือฉบับนี้
+หากท่านเพิกเฉยหรือไม่ดำเนินการ ข้าพเจ้าจะดำเนินการยื่นคำร้องต่อพนักงานตรวจแรงงาน
+กรมสวัสดิการและคุ้มครองแรงงาน และ/หรือดำเนินคดีทางกฎหมายต่อไป
+
+จึงเรียนมาเพื่อทราบและดำเนินการ
+
+ขอแสดงความนับถือ
+
+ลงชื่อ ........................................
+       ({complainant_name})
+       ผู้ร้อง"""
+
+
+def generate_demand_letter_pdf(data: dict, letter_body: str, output_path: str) -> str:
+    """
+    Generate a formal demand letter (หนังสือบอกกล่าว) as PDF.
+
+    data keys:
+        complainant_name, age, address, phone,
+        employer_name, employer_address,
+        position, start_date, end_date, wage_rate,
+        deadline (int, default 15),
+        total_amount (float) — total claimed
+
+    letter_body: AI-generated body text (Thai) describing the claims
+
+    returns: output_path
+    """
+    from docx import Document
+    from docx.shared import Pt, Cm
+    from docx.enum.text import WD_ALIGN_PARAGRAPH
+
+    now = datetime.now()
+    thai_date = f"{now.day} {THAI_MONTHS[now.month]} {_to_thai_year(now.year)}"
+
+    # ── Build document ────────────────────────────────────────────────────
+    doc = Document()
+
+    # Page margins
+    for section in doc.sections:
+        section.top_margin    = Cm(2.5)
+        section.bottom_margin = Cm(2.5)
+        section.left_margin   = Cm(3.0)
+        section.right_margin  = Cm(2.5)
+
+    def add_para(text="", bold=False, size=16, align=WD_ALIGN_PARAGRAPH.LEFT, space_before=0, space_after=6):
+        p = doc.add_paragraph()
+        p.alignment = align
+        p.paragraph_format.space_before = Pt(space_before)
+        p.paragraph_format.space_after  = Pt(space_after)
+        if text:
+            run = p.add_run(text)
+            run.bold      = bold
+            run.font.size = Pt(size)
+            run.font.name = "TH Sarabun New"
+        return p
+
+    # ── Header ──────────────────────────────────────────────────────────
+    add_para("หนังสือบอกกล่าวทวงถามและเรียกร้องสิทธิ์",
+             bold=True, size=18, align=WD_ALIGN_PARAGRAPH.CENTER, space_after=2)
+    add_para("(ส่งทางไปรษณีย์ลงทะเบียนตอบรับ)",
+             size=14, align=WD_ALIGN_PARAGRAPH.CENTER, space_after=12)
+
+    # Date (right-aligned)
+    add_para(f"วันที่ {thai_date}", size=16, align=WD_ALIGN_PARAGRAPH.RIGHT, space_after=6)
+
+    # Subject & recipient
+    add_para(f"เรื่อง   ขอเรียกร้องสิทธิ์ตามกฎหมายคุ้มครองแรงงาน",
+             bold=True, size=16, space_after=4)
+    add_para(f"เรียน   {data.get('employer_name', '...')}", size=16, space_after=2)
+
+    employer_addr = data.get('employer_address', '')
+    if employer_addr:
+        add_para(f"        {employer_addr}", size=16, space_after=12)
+
+    # ── Opening paragraph ────────────────────────────────────────────────
+    opening = (
+        f"ข้าพเจ้า {data.get('complainant_name', '...')} "
+        f"อายุ {data.get('age', '...')} ปี "
+        f"อยู่บ้านเลขที่ {data.get('address', '...')} "
+        f"โทรศัพท์ {data.get('phone', '...')} "
+        f"เคยเป็นลูกจ้างของ{data.get('employer_name', '...')} "
+        f"ตำแหน่ง {data.get('position', '...')} "
+        f"ระหว่างวันที่ {data.get('start_date', '...')} ถึง {data.get('end_date', '...')} "
+        f"ได้รับค่าจ้างอัตรา {data.get('wage_rate', '...')} บาทต่อเดือน"
+    )
+    add_para(opening, size=16, space_after=8)
+
+    # ── AI-generated body ────────────────────────────────────────────────
+    for paragraph in letter_body.split('\n'):
+        if paragraph.strip():
+            add_para(paragraph.strip(), size=16, space_after=6)
+
+    # ── Demand & deadline ────────────────────────────────────────────────
+    deadline = data.get('deadline', 15)
+    total    = data.get('total_amount', 0)
+    total_str = f"{float(total):,.2f}" if total else "..."
+
+    add_para("", space_after=4)
+    add_para(
+        f"ข้าพเจ้าขอให้ท่านชำระเงินจำนวนรวม {total_str} บาท "
+        f"ภายใน {deadline} วัน นับแต่วันที่ได้รับหนังสือฉบับนี้",
+        bold=True, size=16, space_after=6
+    )
+    add_para(
+        "หากท่านเพิกเฉยหรือไม่ดำเนินการ ข้าพเจ้าจะดำเนินการ ดังนี้",
+        size=16, space_after=4
+    )
+    add_para("1. ยื่นคำร้องต่อพนักงานตรวจแรงงาน กรมสวัสดิการและคุ้มครองแรงงาน", size=16, space_after=4)
+    add_para("2. ฟ้องร้องดำเนินคดีทางแพ่งและอาญาต่อไป", size=16, space_after=12)
+
+    add_para("จึงเรียนมาเพื่อทราบและดำเนินการโดยด่วน", size=16, space_after=16)
+
+    # ── Signature ────────────────────────────────────────────────────────
+    add_para("ขอแสดงความนับถือ", size=16, align=WD_ALIGN_PARAGRAPH.CENTER, space_after=24)
+    add_para("ลงชื่อ ........................................", size=16,
+             align=WD_ALIGN_PARAGRAPH.CENTER, space_after=4)
+    add_para(f"      ({data.get('complainant_name', '...')})", size=16,
+             align=WD_ALIGN_PARAGRAPH.CENTER, space_after=4)
+    add_para("      ผู้ร้อง", size=16, align=WD_ALIGN_PARAGRAPH.CENTER)
+
+    # ── Save & convert ────────────────────────────────────────────────────
+    tmp_dir  = tempfile.mkdtemp()
+    tmp_docx = os.path.join(tmp_dir, "demand_letter.docx")
+    doc.save(tmp_docx)
+
+    try:
         result = subprocess.run(
             [LIBREOFFICE_CMD, "--headless", "--convert-to", "pdf",
              "--outdir", tmp_dir, tmp_docx],
@@ -266,11 +434,9 @@ def generate_kor7_pdf(data: dict, output_path: str) -> str:
         if result.returncode != 0:
             raise RuntimeError(f"LibreOffice error: {result.stderr}")
     except FileNotFoundError:
-        raise RuntimeError(
-            f"LibreOffice not found at: {LIBREOFFICE_CMD}"
-        )
+        raise RuntimeError(f"LibreOffice not found at: {LIBREOFFICE_CMD}")
 
-    tmp_pdf = os.path.join(tmp_dir, "filled_kor7.pdf")
+    tmp_pdf = os.path.join(tmp_dir, "demand_letter.pdf")
     if not os.path.exists(tmp_pdf):
         raise RuntimeError("PDF conversion failed — output file not found")
 
