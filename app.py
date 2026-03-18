@@ -100,7 +100,7 @@ def line_webhook():
         return "OK GET", 200
 
     signature = request.headers.get("X-Line-Signature", "")
-    bbody_bytes = request.get_data()  # raw bytes 유지
+    body_bytes = request.get_data()  # raw bytes 유지
     body = body_bytes.decode("utf-8")  # 로그/파싱용
 
     print("🔥 LINE BODY:", body)
