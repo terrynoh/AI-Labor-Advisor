@@ -4,6 +4,24 @@ line_bot.py
 LINE Messaging API Webhook Handler
 ได้สิทธิ์ — AI Labor Advisor LINE OA
 """
+def handle_message(body):
+    data = json.loads(body)
+
+    for event in data.get("events", []):
+        if event.get("type") != "message":
+            continue
+
+        if event["message"].get("type") != "text":
+            continue
+
+        user_id = event["source"]["userId"]
+        reply_token = event["replyToken"]
+        user_text = event["message"]["text"]
+
+        print("📩 user:", user_text)
+
+        # 👉 기존 로직 실행
+        process_message(user_id, reply_token, user_text)
 
 import os
 import hashlib
@@ -55,6 +73,7 @@ def reply(reply_token: str, messages: list):
     }
     try:
         requests.post(LINE_API_URL, headers=headers, json=payload, timeout=10)
+        print("📡 LINE 응답:", res.status_code, res.text)
     except Exception as e:
         print(f"[LINE reply ERROR] {e}")
 
@@ -194,7 +213,7 @@ def flex_result_msg(analysis: dict, severance: float, leave: float) -> dict:
 
 # ── Main handler ───────────────────────────────────────────────────────────
 
-def handle_message(user_id: str, reply_token: str, user_text: str):
+def process_message(user_id: str, reply_token: str, user_text: str):
     """Process incoming message and reply."""
     from chatbot import analyze_situation
     from calculators import calculate_severance, calculate_leave
