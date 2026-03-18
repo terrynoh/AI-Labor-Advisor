@@ -37,7 +37,7 @@ def verify_signature(body: bytes, signature: str) -> bool:
     """Verify LINE webhook signature."""
     hash_val = hmac.new(
         LINE_CHANNEL_SECRET.encode("utf-8"),
-        body,
+        body if isinstance(body, bytes) else body.encode("utf-8"),
         hashlib.sha256
     ).digest()
     return base64.b64encode(hash_val).decode("utf-8") == signature
