@@ -94,8 +94,11 @@ def chat_endpoint():
         "turns_left": 20 - turn_count
     })
 
-@app.route("/webhook/line", methods=["POST"])
+@app.route("/webhook/line", methods=["GET", "POST"])
 def line_webhook():
+    if request.method == "GET":
+        return "OK GET", 200
+        
     signature = request.headers.get("X-Line-Signature", "")
     body = request.get_data(as_text=True)
 

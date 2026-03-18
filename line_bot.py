@@ -72,7 +72,7 @@ def reply(reply_token: str, messages: list):
         "messages": messages
     }
     try:
-        requests.post(LINE_API_URL, headers=headers, json=payload, timeout=10)
+        res = requests.post(LINE_API_URL, headers=headers, json=payload, timeout=10)
         print("📡 LINE 응답:", res.status_code, res.text)
     except Exception as e:
         print(f"[LINE reply ERROR] {e}")
