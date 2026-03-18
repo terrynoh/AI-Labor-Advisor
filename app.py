@@ -98,9 +98,10 @@ def chat_endpoint():
 def line_webhook():
     if request.method == "GET":
         return "OK GET", 200
-        
+
     signature = request.headers.get("X-Line-Signature", "")
-    body = request.get_data(as_text=True)
+    bbody_bytes = request.get_data()  # raw bytes 유지
+    body = body_bytes.decode("utf-8")  # 로그/파싱용
 
     print("🔥 LINE BODY:", body)
 
@@ -108,7 +109,7 @@ def line_webhook():
     if not signature:
         return "OK", 200
 
-    if not verify_signature(body, signature):
+    if not verify_signature(body_bytes, signature):
         return "Invalid signature", 400
 
     try:
