@@ -47,14 +47,26 @@ def _baht_text(amount) -> str:
 
 def _parse_date(date_str) -> str:
     """
-    วว/ดด/ปปปป 또는 DDMMYYYY → 'DD เดือน YYYY' 형식으로 변환
-    예: '01/02/2566' → '1 กุมภาพันธ์ 2566'
-        '01022566'   → '1 กุมภาพันธ์ 2566'
+    여러 날짜 포맷 → 'DD เดือน YYYY(พ.ศ.)' 형식으로 변환
+    지원 포맷:
+      DD/MM/YYYY  (웹 폼 → fmtDate 변환 결과)
+      DDMMYYYY    (숫자만)
+      YYYY-MM-DD  (HTML date input 직접값 혹시 올 경우)
+    연도는 서기/불기 모두 허용 (2000 미만이면 불기로 간주)
     """
     if not date_str:
         return ""
     s = str(date_str).strip()
-    # 구분자 제거 후 숫자만 추출
+
+    # YYYY-MM-DD
+    if len(s) == 10 and s[4] == "-":
+        parts = s.split("-")
+        if len(parts) == 3:
+            dd, mm, yyyy = int(parts[2]), int(parts[1]), parts[0]
+            if 1 <= mm <= 12:
+                return f"{dd} {THAI_MONTHS[mm]} {yyyy}"
+
+    # DD/MM/YYYY 또는 구분자 제거 후 DDMMYYYY
     digits = s.replace("/", "").replace("-", "").replace(" ", "")
     if len(digits) == 8 and digits.isdigit():
         dd   = int(digits[0:2])
@@ -62,6 +74,7 @@ def _parse_date(date_str) -> str:
         yyyy = digits[4:8]
         if 1 <= mm <= 12:
             return f"{dd} {THAI_MONTHS[mm]} {yyyy}"
+
     return s  # 파싱 불가 시 원본 반환
 
 def _fill(run, value):

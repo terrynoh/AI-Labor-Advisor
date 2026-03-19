@@ -184,6 +184,12 @@
         .wb-bubble.user { background:var(--green); color:white; border-bottom-right-radius:4px; }
         .welcome-bubbles { width:100%; display:flex; flex-direction:column; gap:10px; margin-bottom:26px; }
 
+        /* Tenure segment buttons */
+        .tenure-grid { display:grid; grid-template-columns:1fr 1fr; gap:8px; }
+        .tenure-btn { padding:10px 8px; border:1.5px solid var(--gray-200); border-radius:10px; background:var(--gray-50); font-size:13px; font-weight:600; color:var(--gray-700); font-family:inherit; cursor:pointer; transition:all .2s; text-align:center; }
+        .tenure-btn:hover { border-color:var(--green); background:var(--green-light); color:var(--green-dark); }
+        .tenure-btn.selected { border-color:var(--green); background:var(--green-light); color:var(--green-dark); box-shadow:0 0 0 3px rgba(6,199,85,0.15); }
+
         .step-view { display:none; }
         .step-view.active { display:block; }
         .disclaimer { font-size:11.5px; color:var(--gray-400); text-align:center; padding:4px 0 8px; }
@@ -281,7 +287,18 @@
     <div class="card">
         <div class="card-title">ข้อมูลการทำงาน</div>
         <div class="form-grid">
-            <div class="field"><label>อายุงาน (ปี) <span class="req">*</span></label><input type="number" id="f_work_years" placeholder="2.5" min="0" step="0.1"></div>
+            <div class="field span2">
+                <label>อายุงาน <span class="req">*</span></label>
+                <div class="tenure-grid" id="tenureGrid">
+                    <button type="button" class="tenure-btn" data-years="0.5" onclick="selectTenure(this)">น้อยกว่า 1 ปี</button>
+                    <button type="button" class="tenure-btn" data-years="2.0" onclick="selectTenure(this)">1 – 3 ปี</button>
+                    <button type="button" class="tenure-btn" data-years="4.0" onclick="selectTenure(this)">3 – 6 ปี</button>
+                    <button type="button" class="tenure-btn" data-years="8.0" onclick="selectTenure(this)">6 – 10 ปี</button>
+                    <button type="button" class="tenure-btn" data-years="15.0" onclick="selectTenure(this)">10 – 20 ปี</button>
+                    <button type="button" class="tenure-btn" data-years="25.0" onclick="selectTenure(this)">มากกว่า 20 ปี</button>
+                </div>
+                <input type="hidden" id="f_work_years" value="">
+            </div>
             <div class="field"><label>ขนาดบริษัท <span class="req">*</span></label>
                 <select id="f_company_size"><option value="">-- เลือก --</option><option>น้อยกว่า 5 คน</option><option>5–30 คน</option><option>31–100 คน</option><option>มากกว่า 100 คน</option></select>
             </div>
@@ -491,11 +508,11 @@
             <div class="field"><label>ชื่อ-นามสกุลนายจ้าง</label><input type="text" id="p_employer_person" placeholder="ถ้าทราบ"></div>
         </div>
     </div>
-    <div class="card">
+        <div class="card">
         <div class="card-title">ช่วงเวลาทำงาน</div>
         <div class="form-grid">
-            <div class="field"><label>วันที่เริ่มทำงาน <span class="req">*</span></label><input type="text" id="p_start_date" placeholder="วว/ดด/ปปปป"></div>
-            <div class="field"><label>วันสุดท้ายที่ทำงาน <span class="req">*</span></label><input type="text" id="p_end_date" placeholder="วว/ดด/ปปปป"></div>
+            <div class="field"><label>วันที่เริ่มทำงาน <span class="req">*</span></label><input type="date" id="p_start_date"></div>
+            <div class="field"><label>วันสุดท้ายที่ทำงาน <span class="req">*</span></label><input type="date" id="p_end_date"></div>
         </div>
     </div>
     <div class="card">
@@ -707,7 +724,11 @@
         if (name)   document.getElementById("f_name").value   = name;
         if (age)    document.getElementById("f_age").value    = age;
         if (salary) document.getElementById("f_monthly_salary").value = salary;
-        if (years)  document.getElementById("f_work_years").value     = years;
+        if (years) {
+            // LINE에서 온 float값으로 해당 버튼 자동 선택
+            const btn = document.querySelector(`#tenureGrid [data-years="${parseFloat(years).toFixed(1)}"]`);
+            if (btn) selectTenure(btn);
+        }
 
         if (issue) {
             document.querySelectorAll(".issue-chip").forEach(chip => {
@@ -725,6 +746,12 @@
         }
     })();
 
+    function selectTenure(btn) {
+        document.querySelectorAll(".tenure-btn").forEach(b => b.classList.remove("selected"));
+        btn.classList.add("selected");
+        document.getElementById("f_work_years").value = btn.dataset.years;
+    }
+
     function toggleIssue(el, value) {
         event.preventDefault();
         el.classList.toggle("checked");
@@ -740,7 +767,10 @@
         const empType = document.getElementById("f_employment_type").value;
         const compSize = document.getElementById("f_company_size").value;
 
-        if (!name||!age||!salary||!years||!empType||!compSize) { alert("กรุณากรอกข้อมูลที่มี * ให้ครบครับ"); return; }
+        if (!name||!age||!salary||!years||!empType||!compSize) {
+            if (!years) { alert("กรุณาเลือกอายุงานครับ"); return; }
+            alert("กรุณากรอกข้อมูลที่มี * ให้ครบครับ"); return;
+        }
         if (selectedIssues.size === 0) { alert("กรุณาเลือกปัญหาที่พบอย่างน้อย 1 ข้อครับ"); return; }
 
         step1Data = {
@@ -953,6 +983,13 @@
             }
         }
 
+        // YYYY-MM-DD → DD/MM/YYYY 변환 (pdf_generator의 _parse_date가 처리)
+        function fmtDate(val) {
+            if (!val) return "";
+            const [y, m, d] = val.split("-");
+            return `${d}/${m}/${y}`;
+        }
+
         const caseData = {
             complainant_name: step1Data.name||"",
             age: step1Data.age||"",
@@ -965,8 +1002,8 @@
             employer_province: document.getElementById("p_employer_province").value,
             employer_person: document.getElementById("p_employer_person").value,
             business_type: document.getElementById("p_business_type").value,
-            start_date: document.getElementById("p_start_date").value,
-            end_date: document.getElementById("p_end_date").value,
+            start_date: fmtDate(document.getElementById("p_start_date").value),
+            end_date:   fmtDate(document.getElementById("p_end_date").value),
             wage_rate: step1Data.monthly_salary||"",
             reason: document.getElementById("p_reason").value,
             filed_province: document.getElementById("p_filed_province").value,

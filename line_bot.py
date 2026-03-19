@@ -92,6 +92,52 @@ def quick_reply_msg(text: str, items: list) -> dict:
     }
 
 
+def flex_tenure_msg(text: str) -> dict:
+    """근속기간 선택용 Flex Message 세로 버튼"""
+    buttons = []
+    for opt in TENURE_OPTIONS:
+        buttons.append({
+            "type": "button",
+            "style": "secondary",
+            "height": "sm",
+            "margin": "xs",
+            "action": {
+                "type": "message",
+                "label": opt["label"],
+                "text": opt["text"]
+            }
+        })
+
+    return {
+        "type": "flex",
+        "altText": "เลือกระยะเวลาทำงาน",
+        "contents": {
+            "type": "bubble",
+            "body": {
+                "type": "box",
+                "layout": "vertical",
+                "spacing": "sm",
+                "contents": [
+                    {
+                        "type": "text",
+                        "text": text,
+                        "wrap": True,
+                        "size": "sm",
+                        "color": "#374151",
+                        "margin": "none"
+                    }
+                ]
+            },
+            "footer": {
+                "type": "box",
+                "layout": "vertical",
+                "spacing": "xs",
+                "contents": buttons
+            }
+        }
+    }
+
+
 def button_url_msg(text: str, label: str, url: str) -> dict:
     """웹 리다이렉트 버튼이 달린 Flex 메시지."""
     return {
@@ -229,10 +275,8 @@ def process_message(user_id: str, reply_token: str, user_text: str):
                 raise ValueError
             data["monthly_salary"] = salary
             sessions[user_id] = {"step": STEP_ASK_TENURE, "data": data}
-            reply(reply_token, [quick_reply_msg(
-                "ขอบคุณครับ 😊\n\n"
-                "ทำงานที่บริษัทนี้นานแค่ไหนครับ?",
-                [{"label": opt["label"], "text": opt["text"]} for opt in TENURE_OPTIONS]
+            reply(reply_token, [flex_tenure_msg(
+                "ขอบคุณครับ 😊\n\nทำงานที่บริษัทนี้นานแค่ไหนครับ?"
             )])
         except ValueError:
             reply(reply_token, [text_msg("กรุณากรอกเงินเดือนเป็นตัวเลขครับ เช่น 15000")])
@@ -241,9 +285,8 @@ def process_message(user_id: str, reply_token: str, user_text: str):
     elif step == STEP_ASK_TENURE:
         tenure = TENURE_MAP.get(text)
         if not tenure:
-            reply(reply_token, [quick_reply_msg(
-                "กรุณาเลือกระยะเวลาทำงานครับ 😊",
-                [{"label": opt["label"], "text": opt["text"]} for opt in TENURE_OPTIONS]
+            reply(reply_token, [flex_tenure_msg(
+                "กรุณาเลือกระยะเวลาทำงานครับ 😊"
             )])
             return
 
