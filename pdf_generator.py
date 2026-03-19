@@ -157,9 +157,10 @@ def generate_kor7_pdf(data: dict, output_path: str) -> str:
 
     reason = d.get("reason", "")
     if reason:
-        mid = len(reason) // 2
-        f(51, 4, reason[:mid])
-        f(52, 0, reason[mid:])
+        words = reason.split()
+        mid = len(words) // 2
+        f(51, 4, " ".join(words[:mid]))
+        f(52, 0, " ".join(words[mid:]))
 
     wage_owed = d.get("wage_owed")
     if wage_owed:
