@@ -289,8 +289,7 @@ def generate_package():
     except Exception as e:
         print(f"[generate_package ERROR] {e}")
         return jsonify({"error": str(e)}), 500
-    
-    'app_line-addition.py'
+
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))

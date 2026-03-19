@@ -693,6 +693,38 @@
 
     function startForm() { showView("step1"); updateProgress(1); }
 
+    // ── LINE 리다이렉트 URL 파라미터 pre-fill ──────────────────────────
+    (function prefillFromUrl() {
+        const p = new URLSearchParams(window.location.search);
+        if (!p.get("from") && !p.get("name")) return;  // 파라미터 없으면 skip
+
+        const name   = p.get("name")       || "";
+        const age    = p.get("age")        || "";
+        const salary = p.get("salary")     || "";
+        const years  = p.get("work_years") || "";
+        const issue  = p.get("issue")      || "";
+
+        if (name)   document.getElementById("f_name").value   = name;
+        if (age)    document.getElementById("f_age").value    = age;
+        if (salary) document.getElementById("f_monthly_salary").value = salary;
+        if (years)  document.getElementById("f_work_years").value     = years;
+
+        if (issue) {
+            document.querySelectorAll(".issue-chip").forEach(chip => {
+                if ((chip.getAttribute("onclick") || "").includes(`'${issue}'`)) {
+                    chip.classList.add("checked");
+                    selectedIssues.add(issue);
+                }
+            });
+        }
+
+        // LINE에서 왔으면 welcome 화면 스킵, 바로 step1으로
+        if (p.get("from") === "line") {
+            showView("step1");
+            updateProgress(1);
+        }
+    })();
+
     function toggleIssue(el, value) {
         event.preventDefault();
         el.classList.toggle("checked");
