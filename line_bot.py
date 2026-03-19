@@ -31,8 +31,19 @@ STEP_START           = "start"
 STEP_ASK_NAME        = "ask_name"
 STEP_ASK_AGE         = "ask_age"
 STEP_ASK_SALARY      = "ask_salary"
-STEP_ASK_YEARS       = "ask_years"
+STEP_ASK_TENURE      = "ask_tenure"
 STEP_ASK_TERMINATION = "ask_termination"
+
+# ── 근속기간 구간 → 대표값 매핑 ───────────────────────────────────────────
+TENURE_OPTIONS = [
+    {"label": "น้อยกว่า 1 ปี",   "text": "tenure_1", "years": 0.5,  "display": "น้อยกว่า 1 ปี"},
+    {"label": "1 - 3 ปี",        "text": "tenure_2", "years": 2.0,  "display": "1–3 ปี"},
+    {"label": "3 - 6 ปี",        "text": "tenure_3", "years": 4.0,  "display": "3–6 ปี"},
+    {"label": "6 - 10 ปี",       "text": "tenure_4", "years": 8.0,  "display": "6–10 ปี"},
+    {"label": "10 - 20 ปี",      "text": "tenure_5", "years": 15.0, "display": "10–20 ปี"},
+    {"label": "มากกว่า 20 ปี",   "text": "tenure_6", "years": 25.0, "display": "มากกว่า 20 ปี"},
+]
+TENURE_MAP = {opt["text"]: opt for opt in TENURE_OPTIONS}
 
 
 def verify_signature(body: bytes, signature: str) -> bool:
@@ -134,12 +145,13 @@ def button_url_msg(text: str, label: str, url: str) -> dict:
 
 def build_redirect_url(data: dict, issue: str) -> str:
     params = urllib.parse.urlencode({
-        "name":       data.get("name", ""),
-        "age":        data.get("age", ""),
-        "salary":     data.get("monthly_salary", ""),
-        "work_years": data.get("work_years", ""),
-        "issue":      issue,
-        "from":       "line",
+        "name":           data.get("name", ""),
+        "age":            data.get("age", ""),
+        "salary":         data.get("monthly_salary", ""),
+        "work_years":     data.get("work_years", ""),   # 웹 폼 pre-fill용 (웹에서 재입력 가능)
+        "tenure_display": data.get("tenure_display", ""),
+        "issue":          issue,
+        "from":           "line",
     })
     return f"{WEB_APP_URL}?{params}"
 
@@ -216,42 +228,46 @@ def process_message(user_id: str, reply_token: str, user_text: str):
             if salary < 100:
                 raise ValueError
             data["monthly_salary"] = salary
-            sessions[user_id] = {"step": STEP_ASK_YEARS, "data": data}
-            reply(reply_token, [text_msg(
+            sessions[user_id] = {"step": STEP_ASK_TENURE, "data": data}
+            reply(reply_token, [quick_reply_msg(
                 "ขอบคุณครับ 😊\n\n"
-                "ทำงานที่บริษัทนี้มากี่ปีแล้วครับ?\n"
-                "(ทศนิยมได้ เช่น 2.5 หมายถึง 2 ปีครึ่ง)"
+                "ทำงานที่บริษัทนี้นานแค่ไหนครับ?",
+                [{"label": opt["label"], "text": opt["text"]} for opt in TENURE_OPTIONS]
             )])
         except ValueError:
             reply(reply_token, [text_msg("กรุณากรอกเงินเดือนเป็นตัวเลขครับ เช่น 15000")])
 
-    # ── 근속년수 → 즉석 계산 후 부당해고 질문 ──────────────────────────
-    elif step == STEP_ASK_YEARS:
-        try:
-            years = float(text.replace(",", "").replace("ปี", "").strip())
-            if years < 0:
-                raise ValueError
-            data["work_years"] = years
-            sessions[user_id] = {"step": STEP_ASK_TERMINATION, "data": data}
-
-            salary = data.get("monthly_salary", 0)
-            name   = data.get("name", "คุณ")
-            sev, detail = calculate_severance(salary, years)
-
+    # ── 근속기간 구간 선택 → 즉석 계산 후 부당해고 질문 ────────────────────
+    elif step == STEP_ASK_TENURE:
+        tenure = TENURE_MAP.get(text)
+        if not tenure:
             reply(reply_token, [quick_reply_msg(
-                f"ได้เลยครับ คุณ{name}! 🐘\n\n"
-                f"จากข้อมูลที่แจ้งมา หากถูกเลิกจ้างโดยไม่มีความผิด\n"
-                f"คุณมีสิทธิ์ได้รับค่าชดเชยขั้นต่ำ\n\n"
-                f"💰 {sev:,.0f} บาท\n"
-                f"({detail})\n\n"
-                f"คุณถูกเลิกจ้างโดยไม่มีความผิดใช่ไหมครับ?",
-                [
-                    {"label": "✅ ใช่ครับ/ค่ะ", "text": "YES"},
-                    {"label": "❌ ไม่ใช่",       "text": "NO"},
-                ]
+                "กรุณาเลือกระยะเวลาทำงานครับ 😊",
+                [{"label": opt["label"], "text": opt["text"]} for opt in TENURE_OPTIONS]
             )])
-        except ValueError:
-            reply(reply_token, [text_msg("กรุณากรอกอายุงานเป็นตัวเลขครับ เช่น 3 หรือ 2.5")])
+            return
+
+        years = tenure["years"]
+        data["work_years"]       = years
+        data["tenure_display"]   = tenure["display"]
+        sessions[user_id] = {"step": STEP_ASK_TERMINATION, "data": data}
+
+        salary = data.get("monthly_salary", 0)
+        name   = data.get("name", "คุณ")
+        sev, detail = calculate_severance(salary, years)
+
+        reply(reply_token, [quick_reply_msg(
+            f"ได้เลยครับ คุณ{name}! 🐘\n\n"
+            f"จากข้อมูลที่แจ้งมา หากถูกเลิกจ้างโดยไม่มีความผิด\n"
+            f"คุณมีสิทธิ์ได้รับค่าชดเชยขั้นต่ำ\n\n"
+            f"💰 {sev:,.0f} บาท\n"
+            f"({detail})\n\n"
+            f"คุณถูกเลิกจ้างโดยไม่มีความผิดใช่ไหมครับ?",
+            [
+                {"label": "✅ ใช่ครับ/ค่ะ", "text": "YES"},
+                {"label": "❌ ไม่ใช่",       "text": "NO"},
+            ]
+        )])
 
     # ── 부당해고 여부 → 웹 리다이렉트 ─────────────────────────────────
     elif step == STEP_ASK_TERMINATION:
@@ -281,7 +297,10 @@ def process_message(user_id: str, reply_token: str, user_text: str):
                 f"นอกจากนี้อาจมีค่าวันลา ค่าแจ้งล่วงหน้า\n"
                 f"และค่าเสียหายเพิ่มเติมครับ\n\n"
                 f"กดปุ่มด้านล่างเพื่อตรวจสอบสิทธิ์ครบทุกรายการ\n"
-                f"และดาวน์โหลดแบบฟอร์มร้องเรียนได้เลยครับ 👇"
+                f"และดาวน์โหลดเอกสารได้เลยครับ 👇\n\n"
+                f"📝 หมายเหตุ: เอกสารจะถูกกรอกข้อมูลพื้นฐานให้อัตโนมัติ\n"
+                f"ส่วนข้อมูลส่วนตัว เช่น เลขบัตรประชาชน วันเริ่ม-สิ้นสุดงาน\n"
+                f"กรุณากรอกเพิ่มเติมด้วยตัวเองก่อนยื่นครับ"
             )
             label = "📋 ตรวจสอบสิทธิ์ครบทุกรายการ"
         else:
@@ -292,7 +311,10 @@ def process_message(user_id: str, reply_token: str, user_text: str):
                 f"💰 ค่าจ้างค้างจ่าย\n"
                 f"📅 ค่าวันลาที่ยังไม่ได้ใช้\n"
                 f"⏰ ค่าล่วงเวลา\n\n"
-                f"กดปุ่มด้านล่างเพื่อตรวจสอบสิทธิ์ทั้งหมดครับ 👇"
+                f"กดปุ่มด้านล่างเพื่อตรวจสอบสิทธิ์ทั้งหมดครับ 👇\n\n"
+                f"📝 หมายเหตุ: เอกสารจะถูกกรอกข้อมูลพื้นฐานให้อัตโนมัติ\n"
+                f"ส่วนข้อมูลส่วนตัว เช่น เลขบัตรประชาชน วันเริ่ม-สิ้นสุดงาน\n"
+                f"กรุณากรอกเพิ่มเติมด้วยตัวเองก่อนยื่นครับ"
             )
             label = "📋 ตรวจสอบสิทธิ์ทั้งหมด"
 

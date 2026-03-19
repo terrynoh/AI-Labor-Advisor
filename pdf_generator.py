@@ -45,6 +45,25 @@ def _baht_text(amount) -> str:
     except:
         return str(amount)
 
+def _parse_date(date_str) -> str:
+    """
+    วว/ดด/ปปปป 또는 DDMMYYYY → 'DD เดือน YYYY' 형식으로 변환
+    예: '01/02/2566' → '1 กุมภาพันธ์ 2566'
+        '01022566'   → '1 กุมภาพันธ์ 2566'
+    """
+    if not date_str:
+        return ""
+    s = str(date_str).strip()
+    # 구분자 제거 후 숫자만 추출
+    digits = s.replace("/", "").replace("-", "").replace(" ", "")
+    if len(digits) == 8 and digits.isdigit():
+        dd   = int(digits[0:2])
+        mm   = int(digits[2:4])
+        yyyy = digits[4:8]
+        if 1 <= mm <= 12:
+            return f"{dd} {THAI_MONTHS[mm]} {yyyy}"
+    return s  # 파싱 불가 시 원본 반환
+
 def _fill(run, value):
     if value:
         run.text = f" {str(value)} "
@@ -136,8 +155,12 @@ def generate_kor7_pdf(data: dict, output_path: str) -> str:
     f(38, 1, d.get("workplace_phone",       d.get("employer_phone")))
     f(38, 3, d.get("workplace_landmark",    d.get("employer_landmark")))
 
-    f(39, 4, d.get("start_date"))
-    f(39, 6, d.get("end_date"))
+    # 날짜 파싱 적용
+    start_date = _parse_date(d.get("start_date"))
+    end_date   = _parse_date(d.get("end_date"))
+
+    f(39, 4, start_date)
+    f(39, 6, end_date)
     f(40, 1, d.get("position"))
     f(40, 5, d.get("department"))
     f(41, 5, d.get("supervisor"))
@@ -201,8 +224,8 @@ def generate_kor7_pdf(data: dict, output_path: str) -> str:
 
     sev = d.get("severance")
     if sev:
-        f(67, 4, d.get("severance_from_date", d.get("start_date")))
-        f(68, 1, d.get("severance_to_date",   d.get("end_date")))
+        f(67, 4, _parse_date(d.get("severance_from_date", d.get("start_date"))))
+        f(68, 1, _parse_date(d.get("severance_to_date",   d.get("end_date"))))
         f(68, 3, f"{float(sev):,.2f}")
         f(68, 5, _baht_text(sev))
 
@@ -255,7 +278,7 @@ def generate_demand_letter_pdf(data: dict, letter_body: str, output_path: str) -
         section.left_margin   = Cm(3.0)
         section.right_margin  = Cm(2.5)
 
-    def add_para(text="", bold=False, size=16, align=WD_ALIGN_PARAGRAPH.LEFT,
+    def add_para(text="", bold=False, size=14, align=WD_ALIGN_PARAGRAPH.LEFT,
                  space_before=0, space_after=6):
         p = doc.add_paragraph()
         p.alignment = align
@@ -270,19 +293,19 @@ def generate_demand_letter_pdf(data: dict, letter_body: str, output_path: str) -
 
     # Header
     add_para("หนังสือบอกกล่าวทวงถามและเรียกร้องสิทธิ์",
-             bold=True, size=18, align=WD_ALIGN_PARAGRAPH.CENTER, space_after=2)
+             bold=True, size=16, align=WD_ALIGN_PARAGRAPH.CENTER, space_after=2)
     add_para("(ส่งทางไปรษณีย์ลงทะเบียนตอบรับ)",
-             size=14, align=WD_ALIGN_PARAGRAPH.CENTER, space_after=12)
-    add_para(f"วันที่ {thai_date}", size=16,
+             size=13, align=WD_ALIGN_PARAGRAPH.CENTER, space_after=12)
+    add_para(f"วันที่ {thai_date}", size=14,
              align=WD_ALIGN_PARAGRAPH.RIGHT, space_after=6)
 
     add_para("เรื่อง   ขอเรียกร้องสิทธิ์ตามกฎหมายคุ้มครองแรงงาน",
-             bold=True, size=16, space_after=4)
-    add_para(f"เรียน   {data.get('employer_name', '...')}", size=16, space_after=2)
+             bold=True, size=14, space_after=4)
+    add_para(f"เรียน   {data.get('employer_name', '...')}", size=14, space_after=2)
 
     employer_addr = data.get("employer_address", "")
     if employer_addr:
-        add_para(f"        {employer_addr}", size=16, space_after=12)
+        add_para(f"        {employer_addr}", size=14, space_after=12)
 
     # Opening
     opening = (
@@ -292,15 +315,16 @@ def generate_demand_letter_pdf(data: dict, letter_body: str, output_path: str) -
         f"โทรศัพท์ {data.get('phone', '...')} "
         f"เคยเป็นลูกจ้างของ{data.get('employer_name', '...')} "
         f"ตำแหน่ง {data.get('position', '...')} "
-        f"ระหว่างวันที่ {data.get('start_date', '...')} ถึง {data.get('end_date', '...')} "
+        f"ระหว่างวันที่ {_parse_date(data.get('start_date', '...'))} "
+        f"ถึง {_parse_date(data.get('end_date', '...'))} "
         f"ได้รับค่าจ้างอัตรา {data.get('wage_rate', '...')} บาทต่อเดือน"
     )
-    add_para(opening, size=16, space_after=8)
+    add_para(opening, size=14, space_after=8)
 
     # AI body
     for paragraph in letter_body.split("\n"):
         if paragraph.strip():
-            add_para(paragraph.strip(), size=16, space_after=6)
+            add_para(paragraph.strip(), size=14, space_after=6)
 
     # Demand
     deadline  = data.get("deadline", 15)
@@ -311,23 +335,23 @@ def generate_demand_letter_pdf(data: dict, letter_body: str, output_path: str) -
     add_para(
         f"ข้าพเจ้าขอให้ท่านชำระเงินจำนวนรวม {total_str} บาท "
         f"ภายใน {deadline} วัน นับแต่วันที่ได้รับหนังสือฉบับนี้",
-        bold=True, size=16, space_after=6
+        bold=True, size=14, space_after=6
     )
     add_para("หากท่านเพิกเฉยหรือไม่ดำเนินการ ข้าพเจ้าจะดำเนินการ ดังนี้",
-             size=16, space_after=4)
+             size=14, space_after=4)
     add_para("1. ยื่นคำร้องต่อพนักงานตรวจแรงงาน กรมสวัสดิการและคุ้มครองแรงงาน",
-             size=16, space_after=4)
-    add_para("2. ฟ้องร้องดำเนินคดีทางแพ่งและอาญาต่อไป", size=16, space_after=12)
-    add_para("จึงเรียนมาเพื่อทราบและดำเนินการโดยด่วน", size=16, space_after=16)
+             size=14, space_after=4)
+    add_para("2. ฟ้องร้องดำเนินคดีทางแพ่งและอาญาต่อไป", size=14, space_after=12)
+    add_para("จึงเรียนมาเพื่อทราบและดำเนินการโดยด่วน", size=14, space_after=16)
 
     # Signature
-    add_para("ขอแสดงความนับถือ", size=16,
+    add_para("ขอแสดงความนับถือ", size=14,
              align=WD_ALIGN_PARAGRAPH.CENTER, space_after=24)
-    add_para("ลงชื่อ ........................................", size=16,
+    add_para("ลงชื่อ ........................................", size=14,
              align=WD_ALIGN_PARAGRAPH.CENTER, space_after=4)
-    add_para(f"      ({data.get('complainant_name', '...')})", size=16,
+    add_para(f"      ({data.get('complainant_name', '...')})", size=14,
              align=WD_ALIGN_PARAGRAPH.CENTER, space_after=4)
-    add_para("      ผู้ร้อง", size=16, align=WD_ALIGN_PARAGRAPH.CENTER)
+    add_para("      ผู้ร้อง", size=14, align=WD_ALIGN_PARAGRAPH.CENTER)
 
     tmp_dir  = tempfile.mkdtemp()
     tmp_docx = os.path.join(tmp_dir, "demand_letter.docx")
