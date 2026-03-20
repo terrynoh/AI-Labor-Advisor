@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 import os
+import logging
 import tempfile
 from flask import Flask, request, jsonify, render_template, session, send_file
 from chatbot import chat, get_initial_message, analyze_situation
@@ -7,8 +8,21 @@ from calculators import calculate_severance, calculate_leave
 from pdf_generator import generate_kor7_pdf, generate_demand_letter_pdf
 from chatbot import generate_demand_letter_body
 from line_bot import handle_message, verify_signature
+
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s %(name)s %(levelname)s %(message)s"
+)
+logger = logging.getLogger(__name__)
+
 app = Flask(__name__)
-app.secret_key = os.environ.get("SECRET_KEY", "dev-secret-key")
+app.config["MAX_CONTENT_LENGTH"] = 2 * 1024 * 1024  # 2MB 요청 크기 제한
+
+_secret_key = os.environ.get("SECRET_KEY")
+if not _secret_key:
+    logger.warning("SECRET_KEY 환경변수가 설정되지 않았습니다. 프로덕션에서는 반드시 설정하세요.")
+    _secret_key = "dev-secret-key-change-in-production"
+app.secret_key = _secret_key
 
 
 # ─────────────────────────────────────────────
@@ -52,18 +66,18 @@ def generate_petition_pdf():
     user_data = session.get("user_data", {})
     merged = {**user_data, **data}
 
-    tmp = tempfile.NamedTemporaryFile(delete=False, suffix=".pdf")
-    tmp.close()
+    tmp_path = _create_temp_pdf()
     try:
-        generate_kor7_pdf(merged, tmp.name)
+        generate_kor7_pdf(merged, tmp_path)
         return send_file(
-            tmp.name,
+            tmp_path,
             as_attachment=True,
             download_name="คร.7.pdf",
             mimetype="application/pdf"
         )
     except Exception as e:
-        return jsonify({"error": str(e)}), 500
+        logger.error("generate_petition_pdf 오류: %s", e, exc_info=True)
+        return jsonify({"error": "문서 생성 중 오류가 발생했습니다."}), 500
 
 
 # ─────────────────────────────────────────────
@@ -103,19 +117,20 @@ def line_webhook():
     body_bytes = request.get_data()  # raw bytes 유지
     body = body_bytes.decode("utf-8")  # 로그/파싱용
 
-    print("🔥 LINE BODY:", body)
+    logger.debug("LINE webhook body: %s", body)
 
-    # Verify 요청 대응
     if not signature:
-        return "OK", 200
+        logger.warning("LINE webhook: X-Line-Signature 헤더 없음 — 요청 거부")
+        return "Unauthorized", 401
 
     if not verify_signature(body_bytes, signature):
-        return "Invalid signature", 400
+        logger.warning("LINE webhook: 서명 불일치 — 요청 거부")
+        return "Unauthorized", 401
 
     try:
         handle_message(body)
     except Exception as e:
-        print("❌ handle_message error:", e)
+        logger.error("handle_message 오류: %s", e, exc_info=True)
 
     return "OK", 200
 
@@ -142,19 +157,19 @@ def leave():
 
 @app.route("/generate_pdf", methods=["POST"])
 def generate_pdf():
-    data = request.json
-    tmp = tempfile.NamedTemporaryFile(delete=False, suffix=".pdf")
-    tmp.close()
+    data = request.json or {}
+    tmp_path = _create_temp_pdf()
     try:
-        generate_kor7_pdf(data, tmp.name)
+        generate_kor7_pdf(data, tmp_path)
         return send_file(
-            tmp.name,
+            tmp_path,
             as_attachment=True,
             download_name="คร.7.pdf",
             mimetype="application/pdf"
         )
     except Exception as e:
-        return jsonify({"error": str(e)}), 500
+        logger.error("generate_pdf 오류: %s", e, exc_info=True)
+        return jsonify({"error": "문서 생성 중 오류가 발생했습니다."}), 500
 
 
 @app.route("/get_pdf_data", methods=["GET"])
@@ -174,6 +189,13 @@ def get_pdf_data():
 # ─────────────────────────────────────────────
 #  내부 헬퍼
 # ─────────────────────────────────────────────
+
+def _create_temp_pdf() -> str:
+    """임시 PDF 파일 경로를 생성하고 반환합니다."""
+    tmp = tempfile.NamedTemporaryFile(delete=False, suffix=".pdf")
+    tmp.close()
+    return tmp.name
+
 
 def extract_pdf_data_from_messages(messages):
     import anthropic as ac
@@ -197,7 +219,8 @@ def extract_pdf_data_from_messages(messages):
         text = response.content[0].text.strip()
         text = text.replace("```json", "").replace("```", "").strip()
         return json.loads(text)
-    except:
+    except (json.JSONDecodeError, ValueError, Exception) as e:
+        logger.error("extract_pdf_data_from_messages 오류: %s", e, exc_info=True)
         return {}
 
 
@@ -282,8 +305,8 @@ def generate_package():
         return jsonify({"ok": True, "session_id": sid})
 
     except Exception as e:
-        print(f"[generate_package ERROR] {e}")
-        return jsonify({"error": str(e)}), 500
+        logger.error("generate_package 오류: %s", e, exc_info=True)
+        return jsonify({"error": "패키지 생성 중 오류가 발생했습니다."}), 500
 
 
 # ─────────────────────────────────────────────────────────────────

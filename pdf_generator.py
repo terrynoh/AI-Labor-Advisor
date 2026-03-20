@@ -6,12 +6,15 @@ pdf_generator.py
   2. หนังสือบอกกล่าวทวงถาม (Demand Letter)
 """
 
+import logging
 import os
 import platform
 import shutil
 import subprocess
 import tempfile
 from datetime import datetime
+
+logger = logging.getLogger(__name__)
 from docx import Document
 from docx.shared import Pt, Cm
 from docx.enum.text import WD_ALIGN_PARAGRAPH
@@ -42,7 +45,7 @@ def _baht_text(amount) -> str:
     try:
         n = float(amount)
         return f"{n:,.2f} บาท"
-    except:
+    except (ValueError, TypeError):
         return str(amount)
 
 def _parse_date(date_str) -> str:
@@ -257,6 +260,12 @@ def generate_kor7_pdf(data: dict, output_path: str) -> str:
         tmp_pdf = _libreoffice_convert(tmp_dir, tmp_docx, "filled_kor7.pdf")
     except FileNotFoundError:
         raise RuntimeError(f"LibreOffice not found at: {LIBREOFFICE_CMD}")
+    except subprocess.TimeoutExpired:
+        logger.error("LibreOffice PDF 변환 타임아웃 (kor7)")
+        raise RuntimeError("PDF 변환 시간 초과. 잠시 후 다시 시도해주세요.")
+    except Exception as e:
+        logger.error("kor7 PDF 변환 오류: %s", e, exc_info=True)
+        raise RuntimeError("PDF 변환 중 오류가 발생했습니다.")
 
     shutil.move(tmp_pdf, output_path)
     shutil.rmtree(tmp_dir, ignore_errors=True)
@@ -374,6 +383,12 @@ def generate_demand_letter_pdf(data: dict, letter_body: str, output_path: str) -
         tmp_pdf = _libreoffice_convert(tmp_dir, tmp_docx, "demand_letter.pdf")
     except FileNotFoundError:
         raise RuntimeError(f"LibreOffice not found at: {LIBREOFFICE_CMD}")
+    except subprocess.TimeoutExpired:
+        logger.error("LibreOffice PDF 변환 타임아웃 (demand_letter)")
+        raise RuntimeError("PDF 변환 시간 초과. 잠시 후 다시 시도해주세요.")
+    except Exception as e:
+        logger.error("demand_letter PDF 변환 오류: %s", e, exc_info=True)
+        raise RuntimeError("PDF 변환 중 오류가 발생했습니다.")
 
     shutil.move(tmp_pdf, output_path)
     shutil.rmtree(tmp_dir, ignore_errors=True)

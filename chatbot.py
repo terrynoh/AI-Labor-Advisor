@@ -1,9 +1,11 @@
 # -*- coding: utf-8 -*-
 import os
 import json
+import logging
 import anthropic
 from calculators import calculate_severance, calculate_leave, calculate_unpaid_wages
 
+logger = logging.getLogger(__name__)
 client = anthropic.Anthropic(api_key=os.environ.get("ANTHROPIC_API_KEY"))
 
 MAX_TURNS = 20
@@ -70,8 +72,15 @@ def chat(session_messages, user_input):
         updated.append({"role": "assistant", "content": reply})
         return reply, updated, None
 
+    except anthropic.APIStatusError as e:
+        logger.error("Claude API 오류 (status %s): %s", e.status_code, e.message)
+        return None, session_messages, "AI 서비스 일시 오류입니다. 잠시 후 다시 시도해주세요."
+    except anthropic.APIConnectionError as e:
+        logger.error("Claude API 연결 오류: %s", e)
+        return None, session_messages, "네트워크 연결 오류입니다. 인터넷 연결을 확인해주세요."
     except Exception as e:
-        return None, session_messages, str(e)
+        logger.error("chat 예상치 못한 오류: %s", e, exc_info=True)
+        return None, session_messages, "시스템 오류가 발생했습니다. 잠시 후 다시 시도해주세요."
 
 
 # ─────────────────────────────────────────────
@@ -157,7 +166,7 @@ def analyze_situation(form_data: dict) -> dict:
         text = text.replace("```json", "").replace("```", "").strip()
         analysis = json.loads(text)
     except Exception as e:
-        print(f"[analyze_situation ERROR] {e}")
+        logger.error("analyze_situation 오류: %s", e, exc_info=True)
         analysis = {
             "diagnosis": "ไม่สามารถวิเคราะห์ได้ในขณะนี้ กรุณาลองใหม่อีกครั้ง",
             "rights": [],
@@ -248,7 +257,7 @@ def generate_demand_letter_body(case_data: dict) -> str:
         )
         return response.content[0].text.strip()
     except Exception as e:
-        print(f"[generate_demand_letter_body ERROR] {e}")
+        logger.error("generate_demand_letter_body 오류: %s", e, exc_info=True)
         # Fallback template
         return (
             f"ข้าพเจ้าขอแจ้งให้ทราบว่า {case_data.get('employer_name', 'นายจ้าง')} "

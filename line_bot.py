@@ -15,8 +15,13 @@ import hashlib
 import hmac
 import base64
 import json
+import logging
 import urllib.parse
 import requests
+from requests.adapters import HTTPAdapter
+from urllib3.util.retry import Retry
+
+logger = logging.getLogger(__name__)
 
 LINE_CHANNEL_SECRET       = os.environ.get("LINE_CHANNEL_SECRET", "")
 LINE_CHANNEL_ACCESS_TOKEN = os.environ.get("LINE_CHANNEL_ACCESS_TOKEN", "")
@@ -55,6 +60,15 @@ def verify_signature(body: bytes, signature: str) -> bool:
     return base64.b64encode(hash_val).decode("utf-8") == signature
 
 
+def _get_line_session() -> requests.Session:
+    """재시도 로직이 포함된 requests Session을 반환합니다."""
+    session = requests.Session()
+    retry = Retry(total=3, backoff_factor=0.5, status_forcelist=[500, 502, 503, 504])
+    adapter = HTTPAdapter(max_retries=retry)
+    session.mount("https://", adapter)
+    return session
+
+
 def reply(reply_token: str, messages: list):
     headers = {
         "Content-Type": "application/json",
@@ -62,10 +76,12 @@ def reply(reply_token: str, messages: list):
     }
     payload = {"replyToken": reply_token, "messages": messages}
     try:
-        res = requests.post(LINE_API_URL, headers=headers, json=payload, timeout=10)
-        print("LINE reply:", res.status_code, res.text)
+        res = _get_line_session().post(LINE_API_URL, headers=headers, json=payload, timeout=10)
+        logger.info("LINE reply: %s", res.status_code)
+        if res.status_code != 200:
+            logger.warning("LINE reply 비정상 응답: %s %s", res.status_code, res.text)
     except Exception as e:
-        print(f"[LINE reply ERROR] {e}")
+        logger.error("LINE reply 오류: %s", e, exc_info=True)
 
 
 def text_msg(text: str) -> dict:
@@ -212,7 +228,7 @@ def handle_message(body: str):
         user_id     = event["source"]["userId"]
         reply_token = event["replyToken"]
         user_text   = event["message"]["text"]
-        print("user:", user_text)
+        logger.debug("LINE 사용자 메시지: %s", user_text)
         process_message(user_id, reply_token, user_text)
 
 

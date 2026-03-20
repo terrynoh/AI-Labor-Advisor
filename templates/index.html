@@ -732,8 +732,10 @@
         if (age)    document.getElementById("f_age").value    = age;
         if (salary) document.getElementById("f_monthly_salary").value = salary;
         if (years) {
-            // LINE에서 온 float값으로 해당 버튼 자동 선택
-            const btn = document.querySelector(`#tenureGrid [data-years="${parseFloat(years).toFixed(1)}"]`);
+            // LINE에서 온 float값으로 해당 버튼 자동 선택 (부동소수점 비교 안전하게 처리)
+            const targetYears = parseFloat(years).toFixed(1);
+            const btn = Array.from(document.querySelectorAll("#tenureGrid .tenure-btn"))
+                .find(b => parseFloat(b.dataset.years).toFixed(1) === targetYears);
             if (btn) selectTenure(btn);
         }
 
