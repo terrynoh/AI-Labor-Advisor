@@ -202,8 +202,15 @@ def extract_pdf_data_from_messages(messages):
 
 
 # ─────────────────────────────────────────────────────────────────
+#  PDF 임시 저장소 (session_id → {demand_path, petition_path})
+# ─────────────────────────────────────────────────────────────────
+
+_pdf_store = {}
+
+
+# ─────────────────────────────────────────────────────────────────
 #  /generate-package  — 패키지 생성 엔드포인트
-#  프론트에서 결제 완료 후 호출
+#  프론트에서 결제 완료 후 호출 → JSON 반환 (session_id)
 # ─────────────────────────────────────────────────────────────────
 
 @app.route("/generate-package", methods=["POST"])
@@ -211,32 +218,11 @@ def generate_package():
     """
     Request body (JSON):
     {
-        "case_data": {
-            "complainant_name": "...",
-            "age": "...",
-            "address": "...",
-            "phone": "...",
-            "employer_name": "...",
-            "employer_address": "...",
-            "position": "...",
-            "start_date": "...",
-            "end_date": "...",
-            "wage_rate": 45000,
-            "issues": ["wrongful_termination", ...],
-            "severance_amount": 270000,
-            "leave_payout": 6000,
-            "notice_pay": 45000,
-            "wage_owed": 0,
-            "ot_amount": 0,
-            "total_amount": 321000,
-            "deadline": 15
-        }
+        "case_data": { ... }
     }
-
-    Response: JSON with download URLs for generated PDFs
+    Response: { "session_id": "...", "ok": true }
     """
-    import os, tempfile, zipfile
-    from flask import send_file
+    import uuid
 
     try:
         body      = request.get_json(force=True)
@@ -249,11 +235,10 @@ def generate_package():
 
         # ── 1. 내용증명 항의서 생성 ──────────────────────────────────
         letter_body = generate_demand_letter_body(case_data)
-        demand_pdf_path = os.path.join(tmp_dir, "01_demand_letter.pdf")
+        demand_pdf_path = os.path.join(tmp_dir, "demand_letter.pdf")
         generate_demand_letter_pdf(case_data, letter_body, demand_pdf_path)
 
         # ── 2. คร.7 진정서 생성 ──────────────────────────────────────
-        # issues 목록으로 reason 자동 생성
         issues = case_data.get("issues", [])
         issue_map = {
             "wrongful_termination": "ถูกเลิกจ้างโดยไม่เป็นธรรมและไม่มีเหตุผลอันสมควร",
@@ -284,25 +269,51 @@ def generate_package():
             "filed_province":      case_data.get("filed_province", "กรุงเทพมหานคร"),
             "reason":              reason,
         }
-        kor7_pdf_path = os.path.join(tmp_dir, "02_kor7_petition.pdf")
-        generate_kor7_pdf(kor7_data, kor7_pdf_path)
+        petition_pdf_path = os.path.join(tmp_dir, "kor7_petition.pdf")
+        generate_kor7_pdf(kor7_data, petition_pdf_path)
 
-        # ── 3. ZIP으로 묶기 ──────────────────────────────────────────
-        zip_path = os.path.join(tmp_dir, "labor_package.zip")
-        with zipfile.ZipFile(zip_path, "w") as zf:
-            zf.write(demand_pdf_path, "01_หนังสือบอกกล่าว.pdf")
-            zf.write(kor7_pdf_path,   "02_คร7_คำร้อง.pdf")
+        # ── 3. session_id 발급 후 경로 저장 ─────────────────────────
+        sid = str(uuid.uuid4())
+        _pdf_store[sid] = {
+            "demand_path":   demand_pdf_path,
+            "petition_path": petition_pdf_path,
+        }
 
-        return send_file(
-            zip_path,
-            mimetype="application/zip",
-            as_attachment=True,
-            download_name="labor_package.zip"
-        )
+        return jsonify({"ok": True, "session_id": sid})
 
     except Exception as e:
         print(f"[generate_package ERROR] {e}")
         return jsonify({"error": str(e)}), 500
+
+
+# ─────────────────────────────────────────────────────────────────
+#  개별 PDF 다운로드 엔드포인트
+# ─────────────────────────────────────────────────────────────────
+
+@app.route("/download/demand-letter/<session_id>")
+def download_demand_letter(session_id):
+    entry = _pdf_store.get(session_id)
+    if not entry or not os.path.exists(entry["demand_path"]):
+        return jsonify({"error": "File not found"}), 404
+    return send_file(
+        entry["demand_path"],
+        as_attachment=True,
+        download_name="หนังสือบอกกล่าว.pdf",
+        mimetype="application/pdf"
+    )
+
+
+@app.route("/download/petition/<session_id>")
+def download_petition(session_id):
+    entry = _pdf_store.get(session_id)
+    if not entry or not os.path.exists(entry["petition_path"]):
+        return jsonify({"error": "File not found"}), 404
+    return send_file(
+        entry["petition_path"],
+        as_attachment=True,
+        download_name="คร.7_คำร้อง.pdf",
+        mimetype="application/pdf"
+    )
 
 
 if __name__ == "__main__":
