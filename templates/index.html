@@ -396,11 +396,11 @@
                     <div><div style="font-size:13px;font-weight:700;color:#111827">หนังสือบอกกล่าวทวงถาม</div><div style="font-size:11.5px;color:#6b7280;margin-top:1px">ส่งถึงนายจ้างก่อนยื่น เพิ่มน้ำหนักในคดี</div></div>
                 </div>
                 <div style="display:flex;gap:10px;align-items:flex-start">
-                    <div style="width:28px;height:28px;background:var(--deep-light);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0">📁</div>
+                    <div style="width:28px;height:28px;background:var(--deep-light);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0"> 📋</div>
                     <div><div style="font-size:13px;font-weight:700;color:#111827">คู่มือเตรียมหลักฐาน</div><div style="font-size:11.5px;color:#6b7280;margin-top:1px">รายการเอกสารที่ต้องเตรียม พร้อมเหตุผลแต่ละชิ้น</div></div>
                 </div>
                 <div style="display:flex;gap:10px;align-items:flex-start">
-                    <div style="width:28px;height:28px;background:var(--deep-light);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0">🗓</div>
+                    <div style="width:28px;height:28px;background:var(--deep-light);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0"> 📅</div>
                     <div><div style="font-size:13px;font-weight:700;color:#111827">คู่มือขั้นตอน + Timeline</div><div style="font-size:11.5px;color:#6b7280;margin-top:1px">ขั้นตอนการยื่น พร้อมวันที่โดยประมาณ</div></div>
                 </div>
             </div>
@@ -414,7 +414,7 @@
         </div>
 
         <button class="btn-pay" onclick="proceedToPay()">
-            📦 เริ่มเตรียมแพ็กเกจเอกสาร — XXX ฿
+            📦 เริ่มเตรียมแพ็กเกจเอกสาร — ... ฿
         </button>
         <div style="display:flex;justify-content:center;gap:16px;margin-top:10px">
             <span style="font-size:11.5px;color:var(--deep)">✔ ชำระครั้งเดียว</span>
@@ -568,7 +568,7 @@
             <div id="docHaveList"></div>
         </div>
         <div id="docMissSection" style="margin-top:12px">
-            <div style="font-size:12.5px;font-weight:700;color:#991b1b;margin-bottom:8px">⚠️ ยังขาด — พยายามเตรียมเพิ่ม</div>
+            <div style="font-size:12.5px;font-weight:700;color:#991b1b;margin-bottom:8px">⚠️ 📎 เอกสารเสริม (ถ้ามี) — ยิ่งมี ยิ่งได้เปรียบ</div>
             <div id="docMissList"></div>
             <div style="margin-top:10px;padding:10px 12px;background:#fffbeb;border-radius:8px;font-size:12px;color:#78350f;line-height:1.6">💡 ยื่นได้แม้ไม่ครบ เจ้าหน้าที่จะช่วยรวบรวมระหว่างการไต่สวนครับ</div>
         </div>
@@ -785,7 +785,7 @@
         step1Data = {
             name, age:parseInt(age),
             work_years:parseFloat(years),
-            monthly_salary:parseFloat(salary),
+            monthly_salary:parseInt(salary),
             unused_leave_days:parseInt(document.getElementById("f_unused_leave").value)||0,
             total_leave_days:parseInt(document.getElementById("f_total_leave").value)||0,
             employment_type:empType,
@@ -820,7 +820,7 @@
 
         // Urgency
         const urgencyMap = {
-            high:  ["🔴 เร่งด่วนสูง",  "#fef2f2","#ef4444"],
+            high:  ["⏰ มีอายุความ 1-2 ปี",  "#fef2f2","#ef4444"],
             medium:["🟡 ปานกลาง",       "#fffbeb","#b45309"],
             low:   ["🟢 ไม่เร่งด่วน",   "#f0fdf4","#166534"],
         };
@@ -868,6 +868,13 @@
         renderGrid(confirmed,"confirmed","compConfirmedGrid2","compConfirmedSection");
         renderGrid(possible, "possible", "compPossibleGrid2", "compPossibleSection");
         renderGrid(estimated,"estimated","compEstimatedGrid2","compEstimatedSection");
+    }
+
+    const PACKAGE_PRICE = 100;
+
+    function updatePayButton() {
+        const btn = document.querySelector(".btn-pay");
+        if (btn) btn.innerHTML = `📦 เริ่มเตรียมแพ็กเกจเอกสาร — ${PACKAGE_PRICE} ฿`;
     }
 
     function proceedToPay() {
@@ -1124,6 +1131,7 @@
         document.getElementById("docMissSection").style.display="block";
         showView("stepWelcome"); updateProgress(1);
     }
+    updatePayButton();
 </script>
 </body>
 </html>
