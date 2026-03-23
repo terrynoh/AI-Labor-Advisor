@@ -48,7 +48,7 @@ TENURE_OPTIONS = [
     {"label": "10 - 20 ปี",      "text": "tenure_5", "years": 15.0, "display": "10–20 ปี"},
     {"label": "มากกว่า 20 ปี",   "text": "tenure_6", "years": 25.0, "display": "มากกว่า 20 ปี"},
 ]
-TENURE_MAP = {opt["text"]: opt for opt in TENURE_OPTIONS}
+TENURE_MAP = {opt["label"]: opt for opt in TENURE_OPTIONS}
 
 
 def verify_signature(body: bytes, signature: str) -> bool:
@@ -120,7 +120,7 @@ def flex_tenure_msg(text: str) -> dict:
             "action": {
                 "type": "message",
                 "label": opt["label"],
-                "text": opt["text"]
+                "text": opt["label"]
             }
         })
 
@@ -249,10 +249,9 @@ def process_message(user_id: str, reply_token: str, user_text: str):
     if step == STEP_START:
         sessions[user_id] = {"step": STEP_ASK_NAME, "data": {}}
         reply(reply_token, [text_msg(
-            "สวัสดีครับ! 🐘 ผมน้องช้าง\n"
-            "ผู้ช่วยด้านสิทธิ์แรงงานไทย\n\n"
-            "ผมจะช่วยคำนวณค่าชดเชยและสิทธิ์ที่คุณควรได้รับตามกฎหมายครับ\n\n"
-            "เริ่มเลย — ชื่อของคุณคืออะไรครับ? 😊"
+            "ผมน้องช้าง 🐘 ช่วยคำนวณค่าชดเชยให้ฟรีเลยครับ\n"
+            "ไม่ต้องรู้กฎหมาย ไม่ต้องง้อทนาย — ถามน้องช้างได้เลย 😊\n\n"
+            "เริ่มเลย — ชื่อของคุณคืออะไรครับ?"
         )])
 
     # ── 이름 ─────────────────────────────────────────────────────────────
@@ -264,7 +263,7 @@ def process_message(user_id: str, reply_token: str, user_text: str):
         sessions[user_id] = {"step": STEP_ASK_AGE, "data": data}
         reply(reply_token, [text_msg(
             f"ยินดีที่รู้จักครับ คุณ{text}! 😊\n\n"
-            "อายุเท่าไหร่ครับ? (ตัวเลขเท่านั้น เช่น 32)"
+            "อายุเท่าไหร่ครับ? (ใช้ประกอบการแนะนำสิทธิ์เพิ่มเติม เช่น 32)"
         )])
 
     # ── 나이 ─────────────────────────────────────────────────────────────
@@ -349,19 +348,17 @@ def process_message(user_id: str, reply_token: str, user_text: str):
         if is_yes:
             sev, detail = calculate_severance(salary, work_years)
             url = build_redirect_url(data, issue="wrongful_termination")
+            name = data.get("name", "คุณ")
             msg = (
-                f"✅ คุณมีสิทธิ์ได้รับ\n\n"
-                f"💰 ค่าชดเชย: {sev:,.0f} บาท\n"
-                f"({detail})\n\n"
-                f"นอกจากนี้อาจมีค่าวันลา ค่าแจ้งล่วงหน้า\n"
-                f"และค่าเสียหายเพิ่มเติมครับ\n\n"
-                f"กดปุ่มด้านล่างเพื่อตรวจสอบสิทธิ์ครบทุกรายการ\n"
-                f"และดาวน์โหลดเอกสารได้เลยครับ 👇\n\n"
-                f"📝 หมายเหตุ: เอกสารจะถูกกรอกข้อมูลพื้นฐานให้อัตโนมัติ\n"
-                f"ส่วนข้อมูลส่วนตัว เช่น เลขบัตรประชาชน วันเริ่ม-สิ้นสุดงาน\n"
-                f"กรุณากรอกเพิ่มเติมด้วยตัวเองก่อนยื่นครับ"
+                f"✅ ยืนยันแล้วครับ!\n\n"
+                f"สรุปสิทธิ์ของคุณ {name}:\n"
+                f"💰 ค่าชดเชย {sev:,.0f} บาท\n"
+                f"📋 มีสิทธิ์ยื่นเรื่องกับกรมแรงงาน\n\n"
+                f"ขั้นตอนถัดไป — น้องช้างช่วยทำเอกสาร\n"
+                f"ยื่นจริงได้เลย ใช้เวลาแค่ 3 นาที\n\n"
+                f"👇 กดดูรายละเอียดและทำเอกสาร"
             )
-            label = "📋 ตรวจสอบสิทธิ์ครบทุกรายการ"
+            label = "ดูสิทธิ์เต็ม และทำเอกสาร"
         else:
             url = build_redirect_url(data, issue="")
             msg = (
