@@ -3,3 +3,5 @@ anthropic
 python-docx
 gunicorn
 requests
+PyJWT==2.8.0
+omise-python

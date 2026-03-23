@@ -4,6 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>น้องช้าง — AI Labor Advisor</title>
+    <meta name="omise-public-key" content="{{ omise_public_key }}">
+    <script src="https://cdn.omise.co/omise.js"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&family=Noto+Sans+Thai:wght@400;500;600;700&display=swap');
         :root {
@@ -878,11 +880,41 @@
     }
 
     function proceedToPay() {
-        // TODO: real payment integration here
-        // For now simulate payment success
-        renderStep3Full();
-        showView("step3");
-        updateProgress(3);
+        const publicKey = document.querySelector('meta[name="omise-public-key"]').content;
+        if (!publicKey) { alert("결제 설정이 누락되었습니다."); return; }
+        OmiseCard.configure({ publicKey });
+        OmiseCard.open({
+            amount: PACKAGE_PRICE * 100,
+            currency: "THB",
+            defaultPaymentMethod: "credit_card",
+            onCreateTokenSuccess: function(nonce) { submitPayment(nonce); },
+        });
+    }
+
+    async function submitPayment(token) {
+        try {
+            const resp = await fetch("/create-payment", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    token,
+                    case_data: step1Data,
+                    analysis_result: analysisResult,
+                }),
+            });
+            const data = await resp.json();
+            if (!resp.ok) { alert(data.error || "결제 실패"); return; }
+
+            if (data.authorize_uri) {
+                window.location.href = data.authorize_uri;  // 3DS 리다이렉트
+            } else if (data.paid) {
+                renderStep3Full();
+                showView("step3");
+                updateProgress(3);
+            }
+        } catch (e) {
+            alert("결제 중 오류가 발생했습니다.");
+        }
     }
 
     function answerNo() { showView("stepDone"); document.getElementById("progressBar").style.display="none"; }
@@ -1132,6 +1164,27 @@
         showView("stepWelcome"); updateProgress(1);
     }
     updatePayButton();
+
+    // 3DS 결제 후 브라우저 복귀 감지
+    (function checkPaymentReturn() {
+        const inv = new URLSearchParams(window.location.search).get("inv");
+        if (!inv) return;
+        history.replaceState({}, "", window.location.pathname);  // URL 정리
+        fetch(`/get-order-data/${inv}`)
+            .then(r => r.json())
+            .then(data => {
+                if (data.paid) {
+                    step1Data      = data.case_data;
+                    analysisResult = data.analysis_result;
+                    renderStep3Full();
+                    showView("step3");
+                    updateProgress(3);
+                } else {
+                    alert("결제가 확인되지 않았습니다. 잠시 후 다시 시도해주세요.");
+                }
+            })
+            .catch(() => alert("결제 확인 중 오류가 발생했습니다."));
+    })();
 </script>
 </body>
 </html>

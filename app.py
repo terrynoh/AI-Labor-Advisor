@@ -1,7 +1,9 @@
 # -*- coding: utf-8 -*-
 import os
+import uuid
 import logging
 import tempfile
+import omise
 from flask import Flask, request, jsonify, render_template, session, send_file
 from chatbot import chat, get_initial_message, analyze_situation
 from calculators import calculate_severance, calculate_leave
@@ -24,6 +26,13 @@ if not _secret_key:
     _secret_key = "dev-secret-key-change-in-production"
 app.secret_key = _secret_key
 
+OMISE_SECRET_KEY     = os.environ.get("OMISE_SECRET_KEY", "")
+OMISE_PUBLIC_KEY     = os.environ.get("OMISE_PUBLIC_KEY", "")
+APP_BASE_URL         = os.environ.get("APP_BASE_URL", "").rstrip("/")
+PACKAGE_PRICE_SATANG = 10000  # 100 THB
+
+_pending_orders: dict = {}  # inv → {case_data, analysis_result, _paid}
+
 
 # ─────────────────────────────────────────────
 #  페이지
@@ -33,7 +42,7 @@ app.secret_key = _secret_key
 def index():
     session.clear()
     session["messages"] = []
-    return render_template("index.html")
+    return render_template("index.html", omise_public_key=OMISE_PUBLIC_KEY)
 
 
 # ─────────────────────────────────────────────
@@ -337,6 +346,96 @@ def download_petition(session_id):
         download_name="คร.7_คำร้อง.pdf",
         mimetype="application/pdf"
     )
+
+
+# ─────────────────────────────────────────────────────────────────
+#  Omise 결제 연동
+# ─────────────────────────────────────────────────────────────────
+
+@app.route("/create-payment", methods=["POST"])
+def create_payment():
+    """
+    Body: { "token": "tokn_...", "case_data": {...}, "analysis_result": {...} }
+    Response: { "inv": "...", "paid": true }
+           or { "inv": "...", "authorize_uri": "..." }  (3DS 필요 시)
+    """
+    body          = request.get_json(force=True) or {}
+    token         = body.get("token", "")
+    case_data     = body.get("case_data", {})
+    analysis_result = body.get("analysis_result", {})
+
+    if not token:
+        return jsonify({"error": "token required"}), 400
+    if not OMISE_SECRET_KEY:
+        return jsonify({"error": "payment not configured"}), 503
+
+    inv = uuid.uuid4().hex[:16]
+    _pending_orders[inv] = {"case_data": case_data, "analysis_result": analysis_result, "_paid": False}
+
+    try:
+        omise.api_secret = OMISE_SECRET_KEY
+        charge = omise.Charge.create(
+            amount=PACKAGE_PRICE_SATANG,
+            currency="thb",
+            card=token,
+            return_uri=f"{APP_BASE_URL}/payment-return?inv={inv}",
+            metadata={"invoice": inv},
+        )
+
+        if charge.status == "successful":
+            _pending_orders[inv]["_paid"] = True
+            logger.info("Omise 즉시 결제 완료: %s", inv)
+            return jsonify({"ok": True, "inv": inv, "paid": True})
+
+        if getattr(charge, "authorize_uri", None):
+            logger.info("Omise 3DS 리다이렉트: %s", inv)
+            return jsonify({"ok": True, "inv": inv, "authorize_uri": charge.authorize_uri})
+
+        logger.warning("Omise 결제 실패: %s status=%s", inv, charge.status)
+        return jsonify({"error": "결제 실패", "status": charge.status}), 402
+
+    except Exception as e:
+        logger.error("create_payment 오류: %s", e, exc_info=True)
+        return jsonify({"error": "결제 처리 중 오류가 발생했습니다."}), 500
+
+
+@app.route("/webhook/omise", methods=["POST"])
+def webhook_omise():
+    """Omise 백엔드 웹훅 — charge.complete 이벤트 수신"""
+    try:
+        event  = request.get_json(force=True) or {}
+        if event.get("key") == "charge.complete":
+            charge = event.get("data", {})
+            inv    = (charge.get("metadata") or {}).get("invoice", "")
+            if inv and charge.get("status") == "successful":
+                if inv in _pending_orders:
+                    _pending_orders[inv]["_paid"] = True
+                    logger.info("Omise 웹훅 결제 확인: %s", inv)
+        return "OK", 200
+    except Exception as e:
+        logger.error("webhook_omise 오류: %s", e, exc_info=True)
+        return "Error", 400
+
+
+@app.route("/payment-return")
+def payment_return():
+    """3DS 완료 후 브라우저 복귀 페이지"""
+    return render_template("index.html", omise_public_key=OMISE_PUBLIC_KEY)
+
+
+@app.route("/get-order-data/<inv>")
+def get_order_data(inv):
+    """결제 복귀 후 프론트에서 case_data/analysis_result 복원용"""
+    entry = _pending_orders.get(inv)
+    if not entry:
+        return jsonify({"error": "not found"}), 404
+    if not entry.get("_paid"):
+        return jsonify({"paid": False}), 202
+    return jsonify({
+        "paid": True,
+        "case_data":       entry["case_data"],
+        "analysis_result": entry["analysis_result"],
+    })
 
 
 if __name__ == "__main__":
