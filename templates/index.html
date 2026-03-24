@@ -67,7 +67,7 @@
         .legal-badge { display:inline-flex; align-items:center; gap:4px; padding:4px 10px; background:#f0fdf4; border:1px solid #86efac; border-radius:20px; font-size:11.5px; color:#166534; font-weight:600; }
 
         /* Form */
-        .form-grid { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+        .form-grid { display:grid; grid-template-columns:repeat(2, minmax(0, 1fr)); gap:12px; }
         .form-grid.full { grid-template-columns:1fr; }
         .field { display:flex; flex-direction:column; gap:5px; }
         .field.span2 { grid-column:span 2; }
