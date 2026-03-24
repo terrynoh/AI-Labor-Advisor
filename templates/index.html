@@ -840,7 +840,12 @@
         (data.rights||[]).forEach(r => {
             const li = document.createElement("li");
             li.style.cssText = "display:flex;align-items:flex-start;gap:8px;font-size:13px;color:#374151;line-height:1.6";
-            li.innerHTML = `<span style="flex-shrink:0">✅</span>${r}`;
+            const icon = document.createElement("span");
+            icon.style.cssText = "flex-shrink:0";
+            icon.textContent = "✅";
+            const text = document.createElement("span");
+            text.textContent = r;
+            li.appendChild(icon); li.appendChild(text);
             rList.appendChild(li);
         });
 
@@ -937,7 +942,12 @@
         (data.rights||[]).forEach(r => {
             const li = document.createElement("li");
             li.style.cssText = "display:flex;align-items:flex-start;gap:9px;font-size:13.5px;color:#374151;line-height:1.6;margin-bottom:8px";
-            li.innerHTML = `<span style="font-size:14px;flex-shrink:0">✅</span>${r}`;
+            const icon = document.createElement("span");
+            icon.style.cssText = "font-size:14px;flex-shrink:0";
+            icon.textContent = "✅";
+            const text = document.createElement("span");
+            text.textContent = r;
+            li.appendChild(icon); li.appendChild(text);
             rList.appendChild(li);
         });
 

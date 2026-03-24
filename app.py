@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 import os
 import uuid
+import time
 import logging
 import tempfile
 import omise
@@ -31,7 +32,29 @@ OMISE_PUBLIC_KEY     = os.environ.get("OMISE_PUBLIC_KEY", "")
 APP_BASE_URL         = os.environ.get("APP_BASE_URL", "").rstrip("/")
 PACKAGE_PRICE_SATANG = 10000  # 100 THB
 
-_pending_orders: dict = {}  # inv → {case_data, analysis_result, _paid}
+_pending_orders: dict = {}  # inv → {case_data, analysis_result, _paid, _ts}
+_pdf_store:      dict = {}  # sid → {demand_path, petition_path, _ts}
+
+_ORDER_TTL = 24 * 3600   # 24시간
+_PDF_TTL   = 1  * 3600   # 1시간
+
+
+def _evict_expired():
+    """만료된 항목 정리 (각 요청 시 호출)."""
+    now = time.time()
+    for inv in [k for k, v in _pending_orders.items() if now - v.get("_ts", 0) > _ORDER_TTL]:
+        _pending_orders.pop(inv, None)
+        logger.debug("_pending_orders 만료 제거: %s", inv)
+    for sid in [k for k, v in _pdf_store.items() if now - v.get("_ts", 0) > _PDF_TTL]:
+        entry = _pdf_store.pop(sid, {})
+        for path_key in ("demand_path", "petition_path"):
+            p = entry.get(path_key)
+            if p and os.path.exists(p):
+                try:
+                    os.remove(p)
+                except OSError:
+                    pass
+        logger.debug("_pdf_store 만료 제거: %s", sid)
 
 
 # ─────────────────────────────────────────────
@@ -49,6 +72,47 @@ def index():
 #  NEW: 폼 기반 플로우
 # ─────────────────────────────────────────────
 
+_VALID_ISSUES = {
+    "wrongful_termination", "no_severance", "unpaid_wages",
+    "no_notice", "unpaid_leave", "forced_resignation",
+}
+
+def _validate_analyze_input(data: dict) -> str | None:
+    """입력값 검증. 오류 메시지 반환, 정상이면 None."""
+    try:
+        age = int(data.get("age", 0))
+        if not 15 <= age <= 80:
+            return "age must be 15–80"
+    except (TypeError, ValueError):
+        return "age must be an integer"
+
+    try:
+        salary = float(data.get("monthly_salary", 0))
+        if not 100 <= salary <= 10_000_000:
+            return "monthly_salary must be 100–10,000,000"
+    except (TypeError, ValueError):
+        return "monthly_salary must be a number"
+
+    try:
+        years = float(data.get("work_years", 0))
+        if not 0 <= years <= 60:
+            return "work_years must be 0–60"
+    except (TypeError, ValueError):
+        return "work_years must be a number"
+
+    issues = data.get("issues", [])
+    if not isinstance(issues, list):
+        return "issues must be a list"
+    if any(i not in _VALID_ISSUES for i in issues):
+        return "issues contains invalid value"
+
+    name = str(data.get("name", "")).strip()
+    if len(name) > 200:
+        return "name too long"
+
+    return None
+
+
 @app.route("/analyze", methods=["POST"])
 def analyze():
     """
@@ -58,6 +122,11 @@ def analyze():
             employment_type, company_size, issues[] }
     """
     data = request.json or {}
+
+    err = _validate_analyze_input(data)
+    if err:
+        return jsonify({"error": err}), 400
+
     session["user_data"] = data          # 나중에 진정서용으로 재사용
 
     result = analyze_situation(data)
@@ -306,9 +375,11 @@ def generate_package():
 
         # ── 3. session_id 발급 후 경로 저장 ─────────────────────────
         sid = str(uuid.uuid4())
+        _evict_expired()
         _pdf_store[sid] = {
             "demand_path":   demand_pdf_path,
             "petition_path": petition_pdf_path,
+            "_ts":           time.time(),
         }
 
         return jsonify({"ok": True, "session_id": sid})
@@ -369,8 +440,9 @@ def create_payment():
     if not OMISE_SECRET_KEY:
         return jsonify({"error": "payment not configured"}), 503
 
+    _evict_expired()
     inv = uuid.uuid4().hex[:16]
-    _pending_orders[inv] = {"case_data": case_data, "analysis_result": analysis_result, "_paid": False}
+    _pending_orders[inv] = {"case_data": case_data, "analysis_result": analysis_result, "_paid": False, "_ts": time.time()}
 
     try:
         omise.api_secret = OMISE_SECRET_KEY
@@ -401,16 +473,35 @@ def create_payment():
 
 @app.route("/webhook/omise", methods=["POST"])
 def webhook_omise():
-    """Omise 백엔드 웹훅 — charge.complete 이벤트 수신"""
+    """Omise 백엔드 웹훅 — charge.complete 이벤트 수신
+    웹훅 body를 신뢰하지 않고, charge ID로 Omise API에 직접 조회하여 상태 확인.
+    """
     try:
-        event  = request.get_json(force=True) or {}
-        if event.get("key") == "charge.complete":
-            charge = event.get("data", {})
-            inv    = (charge.get("metadata") or {}).get("invoice", "")
-            if inv and charge.get("status") == "successful":
-                if inv in _pending_orders:
-                    _pending_orders[inv]["_paid"] = True
-                    logger.info("Omise 웹훅 결제 확인: %s", inv)
+        event     = request.get_json(force=True) or {}
+        if event.get("key") != "charge.complete":
+            return "OK", 200
+
+        charge_id = (event.get("data") or {}).get("id", "")
+        if not charge_id or not charge_id.startswith("chrg_"):
+            logger.warning("Omise 웹훅: 유효하지 않은 charge id — %s", charge_id)
+            return "OK", 200
+
+        if not OMISE_SECRET_KEY:
+            logger.error("Omise 웹훅: OMISE_SECRET_KEY 미설정")
+            return "Error", 500
+
+        # 웹훅 body 대신 Omise API 직접 조회
+        omise.api_secret = OMISE_SECRET_KEY
+        verified_charge  = omise.Charge.retrieve(charge_id)
+        inv = (getattr(verified_charge, "metadata", None) or {}).get("invoice", "")
+
+        if verified_charge.status == "successful" and inv:
+            if inv in _pending_orders:
+                _pending_orders[inv]["_paid"] = True
+                logger.info("Omise 웹훅 결제 확인 (API 검증): charge=%s inv=%s", charge_id, inv)
+            else:
+                logger.warning("Omise 웹훅: inv=%s not in _pending_orders", inv)
+
         return "OK", 200
     except Exception as e:
         logger.error("webhook_omise 오류: %s", e, exc_info=True)

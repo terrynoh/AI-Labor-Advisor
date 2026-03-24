@@ -11,6 +11,7 @@ Flow:
 """
 
 import os
+import time
 import hashlib
 import hmac
 import base64
@@ -29,7 +30,21 @@ LINE_API_URL              = "https://api.line.me/v2/bot/message/reply"
 WEB_APP_URL               = "https://ai-labor-advisor.onrender.com/"
 
 # ── Session store ──────────────────────────────────────────────────────────
-sessions = {}
+sessions = {}        # user_id → {step, data, _ts}
+_SESSION_TTL = 3600  # 1시간
+
+
+def _get_session(user_id: str) -> dict:
+    """세션 조회. 만료 시 초기화 반환."""
+    entry = sessions.get(user_id)
+    if entry and time.time() - entry.get("_ts", 0) > _SESSION_TTL:
+        sessions.pop(user_id, None)
+        entry = None
+    return entry or {"step": STEP_START, "data": {}, "_ts": time.time()}
+
+
+def _set_session(user_id: str, step: str, data: dict):
+    sessions[user_id] = {"step": step, "data": data, "_ts": time.time()}
 
 # ── Steps ──────────────────────────────────────────────────────────────────
 STEP_START           = "start"
@@ -57,7 +72,7 @@ def verify_signature(body: bytes, signature: str) -> bool:
         body,
         hashlib.sha256
     ).digest()
-    return base64.b64encode(hash_val).decode("utf-8") == signature
+    return hmac.compare_digest(base64.b64encode(hash_val).decode("utf-8"), signature)
 
 
 def _get_line_session() -> requests.Session:
@@ -236,18 +251,18 @@ def process_message(user_id: str, reply_token: str, user_text: str):
     from calculators import calculate_severance
 
     text    = user_text.strip()
-    session = sessions.get(user_id, {"step": STEP_START, "data": {}})
+    session = _get_session(user_id)
     step    = session["step"]
     data    = session["data"]
 
     # 리셋 키워드
     if text.lower() in ["เริ่มใหม่", "reset", "start", "สวัสดี", "หวัดดี", "ใหม่"]:
-        sessions[user_id] = {"step": STEP_START, "data": {}}
+        _set_session(user_id, STEP_START, {})
         step = STEP_START
 
     # ── START ────────────────────────────────────────────────────────────
     if step == STEP_START:
-        sessions[user_id] = {"step": STEP_ASK_NAME, "data": {}}
+        _set_session(user_id, STEP_ASK_NAME, {})
         reply(reply_token, [text_msg(
             "ผมน้องช้าง 🐘 ช่วยคำนวณค่าชดเชยให้ฟรีเลยครับ\n"
             "ไม่ต้องรู้กฎหมาย ไม่ต้องง้อทนาย — ถามน้องช้างได้เลย 😊\n\n"
@@ -260,7 +275,7 @@ def process_message(user_id: str, reply_token: str, user_text: str):
             reply(reply_token, [text_msg("กรุณาพิมพ์ชื่อของคุณครับ 😊")])
             return
         data["name"] = text
-        sessions[user_id] = {"step": STEP_ASK_AGE, "data": data}
+        _set_session(user_id, STEP_ASK_AGE, data)
         reply(reply_token, [text_msg(
             f"ยินดีที่รู้จักครับ คุณ{text}! 😊\n\n"
             "อายุเท่าไหร่ครับ? (ใช้ประกอบการแนะนำสิทธิ์เพิ่มเติม เช่น 32)"
@@ -273,7 +288,7 @@ def process_message(user_id: str, reply_token: str, user_text: str):
             if not 15 <= age <= 80:
                 raise ValueError
             data["age"] = age
-            sessions[user_id] = {"step": STEP_ASK_SALARY, "data": data}
+            _set_session(user_id, STEP_ASK_SALARY, data)
             reply(reply_token, [text_msg(
                 "เข้าใจแล้วครับ 👍\n\n"
                 "เงินเดือนล่าสุดของคุณเท่าไหร่ครับ?\n"
@@ -289,7 +304,7 @@ def process_message(user_id: str, reply_token: str, user_text: str):
             if salary < 100:
                 raise ValueError
             data["monthly_salary"] = salary
-            sessions[user_id] = {"step": STEP_ASK_TENURE, "data": data}
+            _set_session(user_id, STEP_ASK_TENURE, data)
             reply(reply_token, [flex_tenure_msg(
                 "ขอบคุณครับ 😊\n\nทำงานที่บริษัทนี้นานแค่ไหนครับ?"
             )])
@@ -308,7 +323,7 @@ def process_message(user_id: str, reply_token: str, user_text: str):
         years = tenure["years"]
         data["work_years"]       = years
         data["tenure_display"]   = tenure["display"]
-        sessions[user_id] = {"step": STEP_ASK_TERMINATION, "data": data}
+        _set_session(user_id, STEP_ASK_TERMINATION, data)
 
         salary = data.get("monthly_salary", 0)
         name   = data.get("name", "คุณ")
@@ -375,12 +390,12 @@ def process_message(user_id: str, reply_token: str, user_text: str):
             label = "📋 ตรวจสอบสิทธิ์ทั้งหมด"
 
         # 세션 초기화 (다음 대화 대비)
-        sessions[user_id] = {"step": STEP_START, "data": {}}
+        _set_session(user_id, STEP_START, {})
         reply(reply_token, [button_url_msg(msg, label, url)])
 
     # ── fallback ─────────────────────────────────────────────────────────
     else:
-        sessions[user_id] = {"step": STEP_START, "data": {}}
+        _set_session(user_id, STEP_START, {})
         reply(reply_token, [quick_reply_msg(
             "สวัสดีครับ! 🐘 กดปุ่มด้านล่างเพื่อเริ่มต้นใช้งานครับ",
             [{"label": "🔍 เช็คสิทธิ์แรงงาน", "text": "สวัสดี"}]
