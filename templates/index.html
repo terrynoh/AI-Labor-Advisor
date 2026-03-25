@@ -634,6 +634,7 @@
     let step1Data = {};
     let checkedEvidence = new Set();
     let lastSessionId = null;
+    let currentInv = null;
 
     const EVIDENCE_MAP = {
         wrongful_termination: [
@@ -911,6 +912,8 @@
             const data = await resp.json();
             if (!resp.ok) { alert(data.error || "결제 실패"); return; }
 
+            if (data.inv) currentInv = data.inv;
+
             if (data.authorize_uri) {
                 window.location.href = data.authorize_uri;  // 3DS 리다이렉트
             } else if (data.paid) {
@@ -1082,7 +1085,7 @@
         showView("stepPdfLoading");
 
         try {
-            const res = await fetch("/generate-package", { method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify({case_data:caseData}) });
+            const res = await fetch("/generate-package", { method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify({inv:currentInv, case_data:caseData}) });
             if (!res.ok) { const err = await res.json(); throw new Error(err.error||"Unknown error"); }
             const data = await res.json();
             lastSessionId = data.session_id;
@@ -1180,6 +1183,7 @@
     (function checkPaymentReturn() {
         const inv = new URLSearchParams(window.location.search).get("inv");
         if (!inv) return;
+        currentInv = inv;
         history.replaceState({}, "", window.location.pathname);  // URL 정리
         fetch(`/get-order-data/${inv}`)
             .then(r => r.json())

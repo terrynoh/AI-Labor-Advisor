@@ -3,7 +3,10 @@ import os
 import uuid
 import time
 import logging
+import shutil
 import tempfile
+import datetime
+import requests
 import omise
 from flask import Flask, request, jsonify, render_template, session, send_file
 from chatbot import chat, get_initial_message, analyze_situation
@@ -30,13 +33,44 @@ app.secret_key = _secret_key
 OMISE_SECRET_KEY     = os.environ.get("OMISE_SECRET_KEY", "")
 OMISE_PUBLIC_KEY     = os.environ.get("OMISE_PUBLIC_KEY", "")
 APP_BASE_URL         = os.environ.get("APP_BASE_URL", "").rstrip("/")
+LINE_CHANNEL_ACCESS_TOKEN = os.environ.get("LINE_CHANNEL_ACCESS_TOKEN", "")
+ADMIN_LINE_USER_ID   = os.environ.get("ADMIN_LINE_USER_ID", "")
 PACKAGE_PRICE_SATANG = 10000  # 100 THB
 
-_pending_orders: dict = {}  # inv → {case_data, analysis_result, _paid, _ts}
+_pending_orders: dict = {}  # inv → {case_data, analysis_result, _paid, charge_id, _ts}
 _pdf_store:      dict = {}  # sid → {demand_path, petition_path, _ts}
 
 _ORDER_TTL = 24 * 3600   # 24시간
 _PDF_TTL   = 1  * 3600   # 1시간
+
+
+def _notify_admin(invoice: str, name: str, error: str, refunded: bool):
+    """관리자 LINE 알림 전송."""
+    if not ADMIN_LINE_USER_ID or not LINE_CHANNEL_ACCESS_TOKEN:
+        logger.warning("관리자 LINE 알림 미설정 — ADMIN_LINE_USER_ID 또는 LINE_CHANNEL_ACCESS_TOKEN 없음")
+        return
+    status = "완료" if refunded else "실패"
+    now = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    text = (
+        f"🚨 PDF 생성 실패\n"
+        f"invoice: {invoice}\n"
+        f"이름: {name}\n"
+        f"에러: {error}\n"
+        f"환불 상태: {status}\n"
+        f"시각: {now}"
+    )
+    try:
+        requests.post(
+            "https://api.line.me/v2/bot/message/push",
+            headers={
+                "Authorization": f"Bearer {LINE_CHANNEL_ACCESS_TOKEN}",
+                "Content-Type": "application/json",
+            },
+            json={"to": ADMIN_LINE_USER_ID, "messages": [{"type": "text", "text": text}]},
+            timeout=5,
+        )
+    except Exception as ex:
+        logger.error("관리자 LINE 알림 전송 실패: %s", ex)
 
 
 def _evict_expired():
@@ -327,10 +361,13 @@ def generate_package():
 
     try:
         body      = request.get_json(force=True)
+        inv       = body.get("inv", "")
         case_data = body.get("case_data", {})
 
         if not case_data.get("complainant_name"):
             return jsonify({"error": "complainant_name required"}), 400
+
+        order = _pending_orders.get(inv, {})
 
         tmp_dir = tempfile.mkdtemp()
 
@@ -388,7 +425,32 @@ def generate_package():
         except Exception as e:
             logger.error("generate_package PDF 생성 오류: %s", e, exc_info=True)
             shutil.rmtree(tmp_dir, ignore_errors=True)
-            return jsonify({"error": "패키지 생성 중 오류가 발생했습니다."}), 500
+
+            # ── 자동 환불 시도 ────────────────────────────────────────────
+            refunded = False
+            charge_id = order.get("charge_id", "")
+            if charge_id and OMISE_SECRET_KEY:
+                try:
+                    omise.api_secret = OMISE_SECRET_KEY
+                    omise.Charge.retrieve(charge_id).refund(amount=PACKAGE_PRICE_SATANG)
+                    refunded = True
+                    logger.info("Omise 자동 환불 완료: charge=%s inv=%s", charge_id, inv)
+                except Exception as refund_err:
+                    logger.error("Omise 자동 환불 실패: charge=%s err=%s", charge_id, refund_err)
+
+            # ── 관리자 LINE 알림 ──────────────────────────────────────────
+            _notify_admin(
+                invoice=inv,
+                name=case_data.get("complainant_name", "-"),
+                error=str(e),
+                refunded=refunded,
+            )
+
+            return jsonify({
+                "error": "เกิดข้อผิดพลาดในการสร้างเอกสาร",
+                "message": "ระบบจะคืนเงินให้อัตโนมัติภายใน 24 ชั่วโมง กรุณาติดต่อ Line OA หากไม่ได้รับเงินคืน",
+                "refunded": refunded,
+            }), 500
 
     except Exception as e:
         logger.error("generate_package 오류: %s", e, exc_info=True)
@@ -462,7 +524,8 @@ def create_payment():
 
         if charge.status == "successful":
             _pending_orders[inv]["_paid"] = True
-            logger.info("Omise 즉시 결제 완료: %s", inv)
+            _pending_orders[inv]["charge_id"] = charge.id
+            logger.info("Omise 즉시 결제 완료: %s charge=%s", inv, charge.id)
             return jsonify({"ok": True, "inv": inv, "paid": True})
 
         if getattr(charge, "authorize_uri", None):
@@ -504,6 +567,7 @@ def webhook_omise():
         if verified_charge.status == "successful" and inv:
             if inv in _pending_orders:
                 _pending_orders[inv]["_paid"] = True
+                _pending_orders[inv]["charge_id"] = charge_id
                 logger.info("Omise 웹훅 결제 확인 (API 검증): charge=%s inv=%s", charge_id, inv)
             else:
                 logger.warning("Omise 웹훅: inv=%s not in _pending_orders", inv)
