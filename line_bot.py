@@ -244,6 +244,7 @@ def handle_message(body: str):
         reply_token = event["replyToken"]
         user_text   = event["message"]["text"]
         logger.debug("LINE 사용자 메시지: %s", user_text)
+        logger.info("LINE USER ID: %s", user_id)
         process_message(user_id, reply_token, user_text)
 
 
