@@ -334,55 +334,61 @@ def generate_package():
 
         tmp_dir = tempfile.mkdtemp()
 
-        # ── 1. 내용증명 항의서 생성 ──────────────────────────────────
-        letter_body = generate_demand_letter_body(case_data)
-        demand_pdf_path = os.path.join(tmp_dir, "demand_letter.pdf")
-        generate_demand_letter_pdf(case_data, letter_body, demand_pdf_path)
+        try:
+            # ── 1. 내용증명 항의서 생성 ──────────────────────────────────
+            letter_body = generate_demand_letter_body(case_data)
+            demand_pdf_path = os.path.join(tmp_dir, "demand_letter.pdf")
+            generate_demand_letter_pdf(case_data, letter_body, demand_pdf_path)
 
-        # ── 2. คร.7 진정서 생성 ──────────────────────────────────────
-        issues = case_data.get("issues", [])
-        issue_map = {
-            "wrongful_termination": "ถูกเลิกจ้างโดยไม่เป็นธรรมและไม่มีเหตุผลอันสมควร",
-            "no_severance":         "นายจ้างไม่จ่ายค่าชดเชยการเลิกจ้าง",
-            "unpaid_wages":         "นายจ้างค้างจ่ายค่าจ้าง",
-            "no_notice":            "นายจ้างไม่บอกกล่าวล่วงหน้าก่อนเลิกจ้าง",
-            "unpaid_leave":         "นายจ้างไม่จ่ายค่าจ้างสำหรับวันลาที่ยังไม่ได้ใช้",
-            "forced_resignation":   "ถูกบังคับให้ลาออกซึ่งถือเป็นการเลิกจ้างโดยอ้อม",
-        }
-        reason_parts = [issue_map[i] for i in issues if i in issue_map]
-        reason = " และ".join(reason_parts) if reason_parts else case_data.get("reason", "")
+            # ── 2. คร.7 진정서 생성 ──────────────────────────────────────
+            issues = case_data.get("issues", [])
+            issue_map = {
+                "wrongful_termination": "ถูกเลิกจ้างโดยไม่เป็นธรรมและไม่มีเหตุผลอันสมควร",
+                "no_severance":         "นายจ้างไม่จ่ายค่าชดเชยการเลิกจ้าง",
+                "unpaid_wages":         "นายจ้างค้างจ่ายค่าจ้าง",
+                "no_notice":            "นายจ้างไม่บอกกล่าวล่วงหน้าก่อนเลิกจ้าง",
+                "unpaid_leave":         "นายจ้างไม่จ่ายค่าจ้างสำหรับวันลาที่ยังไม่ได้ใช้",
+                "forced_resignation":   "ถูกบังคับให้ลาออกซึ่งถือเป็นการเลิกจ้างโดยอ้อม",
+            }
+            reason_parts = [issue_map[i] for i in issues if i in issue_map]
+            reason = " และ".join(reason_parts) if reason_parts else case_data.get("reason", "")
 
-        kor7_data = {
-            "complainant_name":    case_data.get("complainant_name"),
-            "age":                 case_data.get("age"),
-            "address_no":          case_data.get("address_no", case_data.get("address", "")),
-            "phone":               case_data.get("phone"),
-            "employer_name":       case_data.get("employer_name"),
-            "employer_address_no": case_data.get("employer_address_no", case_data.get("employer_address", "")),
-            "position":            case_data.get("position"),
-            "start_date":          case_data.get("start_date"),
-            "end_date":            case_data.get("end_date"),
-            "wage_rate":           case_data.get("wage_rate"),
-            "severance":           case_data.get("severance_amount"),
-            "notice_pay":          case_data.get("notice_pay"),
-            "wage_owed":           case_data.get("wage_owed"),
-            "ot_amount":           case_data.get("ot_amount"),
-            "filed_province":      case_data.get("filed_province", "กรุงเทพมหานคร"),
-            "reason":              reason,
-        }
-        petition_pdf_path = os.path.join(tmp_dir, "kor7_petition.pdf")
-        generate_kor7_pdf(kor7_data, petition_pdf_path)
+            kor7_data = {
+                "complainant_name":    case_data.get("complainant_name"),
+                "age":                 case_data.get("age"),
+                "address_no":          case_data.get("address_no", case_data.get("address", "")),
+                "phone":               case_data.get("phone"),
+                "employer_name":       case_data.get("employer_name"),
+                "employer_address_no": case_data.get("employer_address_no", case_data.get("employer_address", "")),
+                "position":            case_data.get("position"),
+                "start_date":          case_data.get("start_date"),
+                "end_date":            case_data.get("end_date"),
+                "wage_rate":           case_data.get("wage_rate"),
+                "severance":           case_data.get("severance_amount"),
+                "notice_pay":          case_data.get("notice_pay"),
+                "wage_owed":           case_data.get("wage_owed"),
+                "ot_amount":           case_data.get("ot_amount"),
+                "filed_province":      case_data.get("filed_province", "กรุงเทพมหานคร"),
+                "reason":              reason,
+            }
+            petition_pdf_path = os.path.join(tmp_dir, "kor7_petition.pdf")
+            generate_kor7_pdf(kor7_data, petition_pdf_path)
 
-        # ── 3. session_id 발급 후 경로 저장 ─────────────────────────
-        sid = str(uuid.uuid4())
-        _evict_expired()
-        _pdf_store[sid] = {
-            "demand_path":   demand_pdf_path,
-            "petition_path": petition_pdf_path,
-            "_ts":           time.time(),
-        }
+            # ── 3. session_id 발급 후 경로 저장 ─────────────────────────
+            sid = str(uuid.uuid4())
+            _evict_expired()
+            _pdf_store[sid] = {
+                "demand_path":   demand_pdf_path,
+                "petition_path": petition_pdf_path,
+                "_ts":           time.time(),
+            }
 
-        return jsonify({"ok": True, "session_id": sid})
+            return jsonify({"ok": True, "session_id": sid})
+
+        except Exception as e:
+            logger.error("generate_package PDF 생성 오류: %s", e, exc_info=True)
+            shutil.rmtree(tmp_dir, ignore_errors=True)
+            return jsonify({"error": "패키지 생성 중 오류가 발생했습니다."}), 500
 
     except Exception as e:
         logger.error("generate_package 오류: %s", e, exc_info=True)

@@ -88,17 +88,21 @@ def _fill(run, value):
 
 def _libreoffice_convert(tmp_dir, tmp_docx, out_pdf_name):
     """Convert docx to PDF via LibreOffice, return PDF path."""
-    result = subprocess.run(
-        [LIBREOFFICE_CMD, "--headless", "--convert-to", "pdf",
-         "--outdir", tmp_dir, tmp_docx],
-        capture_output=True, text=True, timeout=60
-    )
-    if result.returncode != 0:
-        raise RuntimeError(f"LibreOffice error: {result.stderr}")
-    tmp_pdf = os.path.join(tmp_dir, out_pdf_name)
-    if not os.path.exists(tmp_pdf):
-        raise RuntimeError("PDF conversion failed — output file not found")
-    return tmp_pdf
+    try:
+        result = subprocess.run(
+            [LIBREOFFICE_CMD, "--headless", "--convert-to", "pdf",
+             "--outdir", tmp_dir, tmp_docx],
+            capture_output=True, text=True, timeout=60
+        )
+        if result.returncode != 0:
+            raise RuntimeError(f"LibreOffice error: {result.stderr}")
+        tmp_pdf = os.path.join(tmp_dir, out_pdf_name)
+        if not os.path.exists(tmp_pdf):
+            raise RuntimeError("PDF conversion failed — output file not found")
+        return tmp_pdf
+    except Exception:
+        shutil.rmtree(tmp_dir, ignore_errors=True)
+        raise
 
 
 # ═══════════════════════════════════════════════════════════════════════════
