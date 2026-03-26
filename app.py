@@ -338,13 +338,6 @@ def extract_pdf_data_from_messages(messages):
 
 
 # ─────────────────────────────────────────────────────────────────
-#  PDF 임시 저장소 (session_id → {demand_path, petition_path})
-# ─────────────────────────────────────────────────────────────────
-
-_pdf_store = {}
-
-
-# ─────────────────────────────────────────────────────────────────
 #  /generate-package  — 패키지 생성 엔드포인트
 #  프론트에서 결제 완료 후 호출 → JSON 반환 (session_id)
 # ─────────────────────────────────────────────────────────────────
@@ -373,7 +366,6 @@ def generate_package():
         tmp_dir = tempfile.mkdtemp()
 
         try:
-            raise Exception("test PDF failure")  # TODO: 테스트 후 제거
             # ── 1. 내용증명 항의서 생성 ──────────────────────────────────
             letter_body = generate_demand_letter_body(case_data)
             demand_pdf_path = os.path.join(tmp_dir, "demand_letter.pdf")
@@ -517,14 +509,11 @@ def create_payment():
     try:
         omise.api_secret = OMISE_SECRET_KEY
 
-        # 🔥 base URL 안전하게 생성
-        base_url = (os.getenv("APP_BASE_URL") or request.url_root).strip().rstrip("/")
+        base_url = APP_BASE_URL or request.url_root.rstrip("/")
         if base_url.startswith("http://"):
             base_url = "https://" + base_url[len("http://"):]
 
         return_uri = f"{base_url}/payment-return?inv={inv}"
-
-        logger.info("[PAYMENT] base_url=%s", base_url)
         logger.info("[PAYMENT] return_uri=%s", return_uri)
 
         charge = omise.Charge.create(
@@ -572,6 +561,7 @@ def webhook_omise():
     웹훅 body를 신뢰하지 않고, charge ID로 Omise API에 직접 조회하여 상태 확인.
     """
     try:
+        event = request.get_json(force=True) or {}
         event_key = event.get("key")
 
         if event_key not in ["charge.complete", "charge.failed", "charge.expired"]:
