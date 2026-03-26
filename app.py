@@ -243,6 +243,11 @@ def line_webhook():
         print("=== LINE webhook 처리 시작 ===", flush=True)
         handle_message(body)
         print("=== LINE webhook 처리 완료 ===", flush=True)
+        import json as _j
+        _body = _j.loads(body)
+        for _e in _body.get("events", []):
+            if "source" in _e:
+                print(f"=== USER ID: {_e['source'].get('userId', '없음')} ===", flush=True)
     except Exception as e:
         logger.error("handle_message 오류: %s", e, exc_info=True)
 
