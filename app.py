@@ -516,17 +516,34 @@ def create_payment():
 
     try:
         omise.api_secret = OMISE_SECRET_KEY
+
+        # 🔥 base URL 안전하게 생성
+        base_url = (os.getenv("APP_BASE_URL") or request.url_root).strip().rstrip("/")
+        if base_url.startswith("http://"):
+            base_url = "https://" + base_url[len("http://"):]
+
+        return_uri = f"{base_url}/payment-return?inv={inv}"
+
+        logger.info("[PAYMENT] base_url=%s", base_url)
+        logger.info("[PAYMENT] return_uri=%s", return_uri)
+
         charge = omise.Charge.create(
             amount=PACKAGE_PRICE_SATANG,
             currency="thb",
             card=token,
-            return_uri=f"{APP_BASE_URL}/payment-return?inv={inv}",
+            return_uri=return_uri,
             metadata={"invoice": inv},
         )
 
+        # 🔥 상태 저장
+        _pending_orders[inv]["charge_id"] = charge.id
+        _pending_orders[inv]["charge_status"] = charge.status
+        _pending_orders[inv]["last_event"] = "create_payment"
+
+        logger.info("[PAYMENT] charge created: inv=%s id=%s status=%s", inv, charge.id, charge.status)
+
         if charge.status == "successful":
             _pending_orders[inv]["_paid"] = True
-            _pending_orders[inv]["charge_id"] = charge.id
             logger.info("Omise 즉시 결제 완료: %s charge=%s", inv, charge.id)
             return jsonify({"ok": True, "inv": inv, "paid": True})
 
@@ -535,11 +552,18 @@ def create_payment():
             return jsonify({"ok": True, "inv": inv, "authorize_uri": charge.authorize_uri})
 
         logger.warning("Omise 결제 실패: %s status=%s", inv, charge.status)
-        return jsonify({"error": "결제 실패", "status": charge.status}), 402
+        _pending_orders[inv]["_paid"] = False
+
+        return jsonify({
+            "error": "การชำระเงินล้มเหลว",
+            "status": charge.status
+        }), 402
 
     except Exception as e:
         logger.error("create_payment 오류: %s", e, exc_info=True)
-        return jsonify({"error": "결제 처리 중 오류가 발생했습니다."}), 500
+        return jsonify({
+            "error": "เกิดข้อผิดพลาดระหว่างดำเนินการชำระเงิน"
+        }), 500
 
 
 @app.route("/webhook/omise", methods=["POST"])
