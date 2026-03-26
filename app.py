@@ -548,8 +548,9 @@ def webhook_omise():
     웹훅 body를 신뢰하지 않고, charge ID로 Omise API에 직접 조회하여 상태 확인.
     """
     try:
-        event     = request.get_json(force=True) or {}
-        if event.get("key") != "charge.complete":
+        event_key = event.get("key")
+
+        if event_key not in ["charge.complete", "charge.failed", "charge.expired"]:
             return "OK", 200
 
         charge_id = (event.get("data") or {}).get("id", "")
