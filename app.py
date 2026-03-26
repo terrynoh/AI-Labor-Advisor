@@ -109,6 +109,7 @@ def index():
 _VALID_ISSUES = {
     "wrongful_termination", "no_severance", "unpaid_wages",
     "no_notice", "unpaid_leave", "forced_resignation",
+    "no_overtime_pay", "unfair_dismissal",
 }
 
 def _validate_analyze_input(data: dict) -> str | None:
@@ -240,14 +241,7 @@ def line_webhook():
         return "Unauthorized", 401
 
     try:
-        print("=== LINE webhook 처리 시작 ===", flush=True)
         handle_message(body)
-        print("=== LINE webhook 처리 완료 ===", flush=True)
-        import json as _j
-        _body = _j.loads(body)
-        for _e in _body.get("events", []):
-            if "source" in _e:
-                print(f"=== USER ID: {_e['source'].get('userId', '없음')} ===", flush=True)
     except Exception as e:
         logger.error("handle_message 오류: %s", e, exc_info=True)
 

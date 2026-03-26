@@ -90,9 +90,11 @@ def chat(session_messages, user_input):
 ISSUE_LABELS = {
     "wrongful_termination": "ถูกเลิกจ้างโดยไม่มีความผิด",
     "forced_resignation":   "ถูกบังคับให้ลาออก",
-    "wage_arrears":         "ค่าจ้างค้างจ่าย",
+    "no_severance":         "นายจ้างไม่จ่ายค่าชดเชย",
+    "unpaid_wages":         "ค่าจ้างค้างจ่าย",
+    "no_notice":            "ไม่บอกกล่าวล่วงหน้า",
+    "unpaid_leave":         "วันลาที่ยังไม่ได้ใช้",
     "no_overtime_pay":      "ไม่ได้รับค่าล่วงเวลา",
-    "unused_leave":         "วันลาที่ยังไม่ได้ใช้",
     "unfair_dismissal":     "เลิกจ้างไม่เป็นธรรม",
 }
 
@@ -135,7 +137,7 @@ def analyze_situation(form_data: dict) -> dict:
 
     # ── Pre-calculate compensation ──────────────────────────────
     severance_amount, severance_detail = (0, "")
-    if issues and any(i in issues for i in ("wrongful_termination", "forced_resignation", "unfair_dismissal")):
+    if issues and any(i in issues for i in ("wrongful_termination", "forced_resignation", "unfair_dismissal", "no_severance")):
         severance_amount, severance_detail = calculate_severance(salary, years)
 
     leave_payout = calculate_leave(salary, unused_days) if unused_days > 0 else 0
