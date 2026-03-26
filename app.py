@@ -240,9 +240,9 @@ def line_webhook():
         return "Unauthorized", 401
 
     try:
-        logger.info("LINE webhook 처리 시작")
+        print("=== LINE webhook 처리 시작 ===", flush=True)
         handle_message(body)
-        logger.info("LINE webhook 처리 완료")
+        print("=== LINE webhook 처리 완료 ===", flush=True)
     except Exception as e:
         logger.error("handle_message 오류: %s", e, exc_info=True)
 
