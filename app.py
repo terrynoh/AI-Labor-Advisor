@@ -229,7 +229,7 @@ def line_webhook():
     body_bytes = request.get_data()  # raw bytes 유지
     body = body_bytes.decode("utf-8")  # 로그/파싱용
 
-    logger.debug("LINE webhook body: %s", body)
+    logger.info("LINE webhook received, body length: %d", len(body))
 
     if not signature:
         logger.warning("LINE webhook: X-Line-Signature 헤더 없음 — 요청 거부")
@@ -240,7 +240,9 @@ def line_webhook():
         return "Unauthorized", 401
 
     try:
+        logger.info("LINE webhook 처리 시작")
         handle_message(body)
+        logger.info("LINE webhook 처리 완료")
     except Exception as e:
         logger.error("handle_message 오류: %s", e, exc_info=True)
 
