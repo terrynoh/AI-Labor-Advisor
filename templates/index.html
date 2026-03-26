@@ -1185,22 +1185,41 @@
         if (!inv) return;
         currentInv = inv;
         history.replaceState({}, "", window.location.pathname);  // URL 정리
-        fetch(`/get-order-data/${inv}`)
-            .then(r => r.json())
-            .then(data => {
+
+        // 대기 메시지 표시
+        document.getElementById("main").innerHTML =
+            `<div class="loading-card">
+                <div class="spinner"></div>
+                <p id="poll-status">กำลังตรวจสอบการชำระเงิน... (1/10)</p>
+            </div>`;
+        showView("main");
+
+        async function pollOrderData(attempt) {
+            if (attempt >= 10) {
+                alert("ยังไม่พบการยืนยันการชำระเงิน กรุณาติดต่อเราครับ");
+                return;
+            }
+            const statusEl = document.getElementById("poll-status");
+            if (statusEl) statusEl.textContent = `กำลังตรวจสอบการชำระเงิน... (${attempt + 1}/10)`;
+            try {
+                const res  = await fetch(`/get-order-data/${inv}`);
+                const data = await res.json();
                 if (data.paid) {
                     step1Data      = data.case_data;
                     analysisResult = data.analysis_result;
                     renderStep3Full();
                     showView("step3");
                     updateProgress(3);
-                } else if (data.status) {
+                } else if (data.status && data.status !== "pending") {
                     alert("การชำระเงินไม่สำเร็จ (" + data.status + ")");
                 } else {
-                    alert("ยังไม่พบการยืนยันการชำระเงิน กรุณาลองใหม่อีกครั้ง");
+                    setTimeout(() => pollOrderData(attempt + 1), 3000);
                 }
-            })
-            .catch(() => alert("เกิดข้อผิดพลาดในการตรวจสอบการชำระเงิน กรุณาติดต่อเราครับ"));
+            } catch (e) {
+                setTimeout(() => pollOrderData(attempt + 1), 3000);
+            }
+        }
+        pollOrderData(0);
     })();
 </script>
 </body>
