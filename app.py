@@ -564,7 +564,7 @@ def webhook_omise():
         event = request.get_json(force=True) or {}
         event_key = event.get("key")
 
-        if event_key not in ["charge.complete", "charge.failed", "charge.expired"]:
+        if event_key not in ["charge.complete", "charge.create", "charge.failed", "charge.expired"]:
             return "OK", 200
 
         charge_id = (event.get("data") or {}).get("id", "")
@@ -581,13 +581,13 @@ def webhook_omise():
         verified_charge  = omise.Charge.retrieve(charge_id)
         inv = (getattr(verified_charge, "metadata", None) or {}).get("invoice", "")
 
-        if verified_charge.status == "successful" and inv:
-            if inv in _pending_orders:
-                _pending_orders[inv]["_paid"] = True
-                _pending_orders[inv]["charge_id"] = charge_id
-                logger.info("Omise 웹훅 결제 확인 (API 검증): charge=%s inv=%s", charge_id, inv)
-            else:
-                logger.warning("Omise 웹훅: inv=%s not in _pending_orders", inv)
+        if inv and inv in _pending_orders:
+            _pending_orders[inv]["charge_id"]     = charge_id
+            _pending_orders[inv]["charge_status"] = verified_charge.status
+            _pending_orders[inv]["_paid"]         = (verified_charge.status == "successful")
+            logger.info("Omise 웹훅 상태 저장: charge=%s inv=%s status=%s", charge_id, inv, verified_charge.status)
+        elif inv:
+            logger.warning("Omise 웹훅: inv=%s not in _pending_orders", inv)
 
         return "OK", 200
     except Exception as e:
@@ -607,12 +607,12 @@ def get_order_data(inv):
     entry = _pending_orders.get(inv)
     if not entry:
         return jsonify({"error": "not found"}), 404
-    if not entry.get("_paid"):
-        return jsonify({"paid": False}), 202
     return jsonify({
-        "paid": True,
-        "case_data":       entry["case_data"],
-        "analysis_result": entry["analysis_result"],
+        "paid":            entry.get("_paid", False),
+        "status":          entry.get("charge_status"),
+        "charge_id":       entry.get("charge_id"),
+        "case_data":       entry.get("case_data"),
+        "analysis_result": entry.get("analysis_result"),
     })
 
 
