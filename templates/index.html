@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>น้องช้าง — AI Labor Advisor</title>
+    <title>น้องช้าง — Rusit (รู้สิทธิ์)</title>
     <meta name="omise-public-key" content="{{ omise_public_key }}">
     <script src="https://cdn.omise.co/omise.js"></script>
     <style>
@@ -206,7 +206,7 @@
 <div class="header">
     <div class="header-left">
         <svg width="32" height="32" viewBox="0 0 48 48"><ellipse cx="9" cy="22" rx="6" ry="9" fill="#a78bfa"/><ellipse cx="39" cy="22" rx="6" ry="9" fill="#a78bfa"/><circle cx="24" cy="22" r="13" fill="#c4b5fd"/><circle cx="19.8" cy="19.5" r="1.3" fill="#3b0764"/><circle cx="29.8" cy="19.5" r="1.3" fill="#3b0764"/><path d="M21 30 Q18 35 20 39 Q22 42 24 39 Q23 34 22 30Z" fill="#a78bfa"/></svg>
-        <div><div class="header-title">AI Labor Advisor</div><div class="header-sub">ที่ปรึกษากฎหมายแรงงานไทย</div></div>
+        <div><div class="header-title">Rusit (รู้สิทธิ์)</div><div class="header-sub">ที่ปรึกษากฎหมายแรงงานไทย</div></div>
     </div>
     <button class="reset-btn" onclick="resetAll()">🔄 เริ่มใหม่</button>
 </div>
@@ -322,7 +322,11 @@
             <label class="issue-chip" onclick="toggleIssue(this,'unfair_dismissal')"><input type="checkbox"><span class="chip-icon">⚖️</span><span class="chip-label">เลิกจ้างไม่เป็นธรรม</span><span class="chip-check"></span></label>
         </div>
     </div>
-    <button class="btn-primary" onclick="submitStep1()">🔍 วิเคราะห์สิทธิ์ของฉัน</button>
+    <label style="display:flex;align-items:flex-start;gap:10px;margin-bottom:12px;cursor:pointer;font-size:13px;color:var(--gray-700);line-height:1.5">
+        <input type="checkbox" id="pdpa_consent" style="margin-top:2px;flex-shrink:0;accent-color:var(--green)" onchange="document.getElementById('step1SubmitBtn').disabled=!this.checked">
+        <span>ข้าพเจ้ายอมรับ <a href="/privacy" target="_blank" style="color:var(--green);text-decoration:underline">นโยบายความเป็นส่วนตัว</a> และยินยอมให้เก็บข้อมูลเพื่อวิเคราะห์สิทธิ์แรงงาน</span>
+    </label>
+    <button class="btn-primary" id="step1SubmitBtn" onclick="submitStep1()" disabled>🔍 วิเคราะห์สิทธิ์ของฉัน</button>
     <p class="disclaimer" style="margin-top:12px">⚠️ ข้อมูลนี้เป็นคำแนะนำเบื้องต้น ไม่ใช่คำปรึกษาทางกฎหมาย</p>
 </div>
 
@@ -1233,5 +1237,9 @@
         pollOrderData(0);
     })();
 </script>
+<footer style="text-align:center;padding:16px;font-size:12px;color:var(--gray-500);border-top:1px solid var(--gray-200);margin-top:8px">
+    <a href="/privacy" target="_blank" style="color:var(--gray-500);text-decoration:underline;margin-right:12px">นโยบายความเป็นส่วนตัว</a>
+    <a href="/terms" target="_blank" style="color:var(--gray-500);text-decoration:underline">ข้อกำหนดการใช้บริการ</a>
+</footer>
 </body>
 </html>
