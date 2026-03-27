@@ -224,7 +224,7 @@ def build_redirect_url(data: dict, issue: str) -> str:
     params = urllib.parse.urlencode({
         "name":           data.get("name", ""),
         "age":            data.get("age", ""),
-        "salary":         data.get("monthly_salary", ""),
+        "salary":         int(data.get("monthly_salary", 0)),
         "work_years":     data.get("work_years", ""),   # 웹 폼 pre-fill용 (웹에서 재입력 가능)
         "tenure_display": data.get("tenure_display", ""),
         "issue":          issue,

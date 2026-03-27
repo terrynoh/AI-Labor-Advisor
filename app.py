@@ -366,7 +366,6 @@ def generate_package():
         tmp_dir = tempfile.mkdtemp()
 
         try:
-            raise Exception("test PDF failure")  # TODO: 테스트 완료 후 제거
             # ── 1. 내용증명 항의서 생성 ──────────────────────────────────
             letter_body = generate_demand_letter_body(case_data)
             demand_pdf_path = os.path.join(tmp_dir, "demand_letter.pdf")
