@@ -624,6 +624,48 @@ def get_order_data(inv):
     })
 
 
+# ─────────────────────────────────────────────────────────────────
+#  TODO: 테스트 완료 후 아래 엔드포인트 삭제
+# ─────────────────────────────────────────────────────────────────
+
+@app.route("/test-payment-failure", methods=["POST"])
+def test_payment_failure():
+    """결제 실패 시나리오 테스트용 임시 엔드포인트.
+    - Thai 에러 메시지 노출 확인
+    - 자동 환불 플로우 확인 (charge_id 전달 시)
+    - 관리자 LINE 알림 확인
+    TODO: 테스트 완료 후 삭제
+    """
+    body      = request.get_json(force=True) or {}
+    inv       = body.get("inv", "test-inv-001")
+    name      = body.get("name", "ผู้ทดสอบ")
+    charge_id = body.get("charge_id", "")
+
+    refunded = False
+    if charge_id and OMISE_SECRET_KEY:
+        try:
+            omise.api_secret = OMISE_SECRET_KEY
+            omise.Charge.retrieve(charge_id).refund(amount=PACKAGE_PRICE_SATANG)
+            refunded = True
+            logger.info("[TEST] 자동 환불 완료: charge=%s", charge_id)
+        except Exception as refund_err:
+            logger.error("[TEST] 자동 환불 실패: %s", refund_err)
+
+    _notify_admin(
+        invoice=inv,
+        name=name,
+        error="[TEST] PDF 생성 실패 시뮬레이션",
+        refunded=refunded,
+    )
+
+    return jsonify({
+        "error":    "เกิดข้อผิดพลาดในการสร้างเอกสาร",
+        "message":  "ระบบจะคืนเงินให้อัตโนมัติภายใน 24 ชั่วโมง กรุณาติดต่อ Line OA หากไม่ได้รับเงินคืน",
+        "refunded": refunded,
+        "test":     True,
+    }), 500
+
+
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
     app.run(debug=False, host="0.0.0.0", port=port)
