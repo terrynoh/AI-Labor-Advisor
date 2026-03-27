@@ -514,7 +514,7 @@ def create_payment():
             base_url = "https://" + base_url[len("http://"):]
 
         return_uri = f"{base_url}/payment-return?inv={inv}"
-        logger.info("[PAYMENT] return_uri=%s", return_uri)
+        logger.warning("[PAYMENT] return_uri=%s", return_uri)
 
         charge = omise.Charge.create(
             amount=PACKAGE_PRICE_SATANG,
@@ -529,7 +529,7 @@ def create_payment():
         _pending_orders[inv]["charge_status"] = charge.status
         _pending_orders[inv]["last_event"] = "create_payment"
 
-        logger.info("[PAYMENT] charge created: inv=%s id=%s status=%s", inv, charge.id, charge.status)
+        logger.warning("[PAYMENT] charge created: inv=%s id=%s status=%s", inv, charge.id, charge.status)
 
         if charge.status == "successful":
             _pending_orders[inv]["_paid"] = True
