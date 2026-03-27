@@ -1086,8 +1086,19 @@
 
         try {
             const res = await fetch("/generate-package", { method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify({inv:currentInv, case_data:caseData}) });
-            if (!res.ok) { const err = await res.json(); throw new Error(err.error||"Unknown error"); }
             const data = await res.json();
+            if (!res.ok) {
+                showView("step3"); updateProgress(3);
+                btn.disabled = false;
+                if (data.retry) {
+                    btn.textContent = "🔄 ลองสร้างเอกสารอีกครั้ง";
+                    alert("❌ " + data.error);
+                } else {
+                    btn.textContent = "📦 สร้างแพ็กเกจเอกสาร";
+                    alert("❌ " + data.error);
+                }
+                return;
+            }
             lastSessionId = data.session_id;
             renderStep4();
             showView("step4");

@@ -362,6 +362,7 @@ def generate_package():
             return jsonify({"error": "complainant_name required"}), 400
 
         order = _pending_orders.get(inv, {})
+        retry_count = order.get("retry_count", 0)
 
         tmp_dir = tempfile.mkdtemp()
 
@@ -420,7 +421,20 @@ def generate_package():
             logger.error("generate_package PDF 생성 오류: %s", e, exc_info=True)
             shutil.rmtree(tmp_dir, ignore_errors=True)
 
-            # ── 자동 환불 시도 ────────────────────────────────────────────
+            # ── retry_count 증가 ─────────────────────────────────────────
+            new_retry = retry_count + 1
+            if inv in _pending_orders:
+                _pending_orders[inv]["retry_count"] = new_retry
+
+            # ── 1회 실패: 재시도 유도 ────────────────────────────────────
+            if new_retry < 2:
+                logger.warning("generate_package 1차 실패 — 재시도 유도: inv=%s", inv)
+                return jsonify({
+                    "error": "เกิดข้อผิดพลาดในการสร้างเอกสาร กรุณาลองใหม่อีกครั้ง",
+                    "retry": True,
+                }), 500
+
+            # ── 2회 실패: 환불 + LINE 알림 ──────────────────────────────
             refunded = False
             charge_id = order.get("charge_id", "")
             if charge_id and OMISE_SECRET_KEY:
@@ -432,7 +446,6 @@ def generate_package():
                 except Exception as refund_err:
                     logger.error("Omise 자동 환불 실패: charge=%s err=%s", charge_id, refund_err)
 
-            # ── 관리자 LINE 알림 ──────────────────────────────────────────
             _notify_admin(
                 invoice=inv,
                 name=case_data.get("complainant_name", "-"),
@@ -441,8 +454,8 @@ def generate_package():
             )
 
             return jsonify({
-                "error": "เกิดข้อผิดพลาดในการสร้างเอกสาร",
-                "message": "ระบบจะคืนเงินให้อัตโนมัติภายใน 24 ชั่วโมง กรุณาติดต่อ Line OA หากไม่ได้รับเงินคืน",
+                "error": "เกิดข้อผิดพลาดในการสร้างเอกสาร ระบบได้คืนเงินให้อัตโนมัติแล้ว กรุณาติดต่อ Line OA เพื่อขอความช่วยเหลือ",
+                "retry": False,
                 "refunded": refunded,
             }), 500
 
