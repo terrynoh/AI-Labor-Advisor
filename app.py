@@ -579,7 +579,15 @@ def webhook_omise():
         # 웹훅 body 대신 Omise API 직접 조회
         omise.api_secret = OMISE_SECRET_KEY
         verified_charge  = omise.Charge.retrieve(charge_id)
-        inv = (getattr(verified_charge, "metadata", None) or {}).get("invoice", "")
+        metadata = getattr(verified_charge, "metadata", None)
+        inv = ""
+        if isinstance(metadata, dict):
+            inv = metadata.get("invoice", "")
+        elif metadata is not None:
+            try:
+                inv = metadata["invoice"]
+            except (KeyError, TypeError):
+                inv = ""
 
         if inv and inv in _pending_orders:
             _pending_orders[inv]["charge_id"]     = charge_id
