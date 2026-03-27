@@ -1179,41 +1179,6 @@
     }
     updatePayButton();
 
-    // ── TODO: 테스트 완료 후 아래 블록 삭제 ──────────────────────────
-    (function initTestMode() {
-        if (!new URLSearchParams(window.location.search).has("test_failure")) return;
-        const panel = document.createElement("div");
-        panel.style.cssText = "position:fixed;bottom:16px;right:16px;background:#1e293b;color:white;padding:14px 18px;border-radius:12px;font-size:13px;z-index:9999;box-shadow:0 4px 16px rgba(0,0,0,.4)";
-        panel.innerHTML = `
-            <div style="font-weight:700;margin-bottom:8px">🧪 TEST: 결제 실패 시뮬레이션</div>
-            <input id="test-charge-id" placeholder="charge_id (선택)" style="width:100%;padding:6px;border-radius:6px;border:none;margin-bottom:8px;font-size:12px;color:#111">
-            <input id="test-inv" placeholder="invoice (선택)" style="width:100%;padding:6px;border-radius:6px;border:none;margin-bottom:8px;font-size:12px;color:#111">
-            <button onclick="runTestFailure()" style="width:100%;background:#ef4444;color:white;border:none;padding:8px;border-radius:8px;font-weight:700;cursor:pointer">실패 시뮬레이션 실행</button>
-            <div id="test-result" style="margin-top:8px;font-size:11px;color:#94a3b8"></div>
-        `;
-        document.body.appendChild(panel);
-    })();
-
-    async function runTestFailure() {
-        const charge_id = document.getElementById("test-charge-id").value.trim();
-        const inv       = document.getElementById("test-inv").value.trim() || "test-inv-001";
-        const resultEl  = document.getElementById("test-result");
-        resultEl.textContent = "전송 중...";
-        try {
-            const resp = await fetch("/test-payment-failure", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ inv, charge_id, name: "ผู้ทดสอบ" }),
-            });
-            const data = await resp.json();
-            resultEl.textContent = `에러: ${data.error} | 환불: ${data.refunded} | LINE 알림 전송됨`;
-            alert(data.message || data.error);
-        } catch (e) {
-            resultEl.textContent = "네트워크 오류: " + e.message;
-        }
-    }
-    // ── 테스트 블록 끝 ────────────────────────────────────────────
-
     // 3DS 결제 후 브라우저 복귀 감지
     (function checkPaymentReturn() {
         const inv = new URLSearchParams(window.location.search).get("inv");
