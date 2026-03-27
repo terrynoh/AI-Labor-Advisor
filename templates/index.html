@@ -305,7 +305,7 @@
             <div class="field"><label>ขนาดบริษัท <span class="req">*</span></label>
                 <select id="f_company_size"><option value="">-- เลือก --</option><option>น้อยกว่า 5 คน</option><option>5–30 คน</option><option>31–100 คน</option><option>มากกว่า 100 คน</option></select>
             </div>
-            <div class="field"><label style="font-size:12px;white-space:nowrap">เงินเดือน (บาท/เดือน) <span class="req">*</span></label><input type="number" id="f_monthly_salary" placeholder="20000" min="0"></div>
+            <div class="field"><label style="font-size:12px;white-space:nowrap">เงินเดือน (บาท/เดือน) <span class="req">*</span></label><input type="number" id="f_monthly_salary" placeholder="20000" min="0" step="1"></div>
             <div class="field"><label>วันลาพักร้อนคงเหลือ</label>
                 <div class="leave-row"><input type="number" id="f_unused_leave" placeholder="0" min="0" style="width:70px"><span>วัน จาก</span><input type="number" id="f_total_leave" placeholder="0" min="0" style="width:70px"><span>วัน</span></div>
             </div>
@@ -734,7 +734,7 @@
 
         if (name)   document.getElementById("f_name").value   = name;
         if (age)    document.getElementById("f_age").value    = age;
-        if (salary) document.getElementById("f_monthly_salary").value = salary;
+        if (salary) document.getElementById("f_monthly_salary").value = parseInt(salary);
         if (years) {
             // LINE에서 온 float값으로 해당 버튼 자동 선택 (부동소수점 비교 안전하게 처리)
             const targetYears = parseFloat(years).toFixed(1);
