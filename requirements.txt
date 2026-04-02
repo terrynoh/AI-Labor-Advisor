@@ -5,3 +5,4 @@ gunicorn
 requests
 PyJWT==2.8.0
 omise
+flask-limiter

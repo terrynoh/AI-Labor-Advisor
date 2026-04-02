@@ -27,7 +27,7 @@ logger = logging.getLogger(__name__)
 LINE_CHANNEL_SECRET       = os.environ.get("LINE_CHANNEL_SECRET", "")
 LINE_CHANNEL_ACCESS_TOKEN = os.environ.get("LINE_CHANNEL_ACCESS_TOKEN", "")
 LINE_API_URL              = "https://api.line.me/v2/bot/message/reply"
-WEB_APP_URL               = "https://ai-labor-advisor.onrender.com/"
+WEB_APP_URL               = os.environ.get("WEB_APP_URL", "https://ai-labor-advisor.onrender.com/")
 
 # ── Session store ──────────────────────────────────────────────────────────
 sessions = {}        # user_id → {step, data, _ts}
@@ -78,7 +78,7 @@ def verify_signature(body: bytes, signature: str) -> bool:
 def _get_line_session() -> requests.Session:
     """재시도 로직이 포함된 requests Session을 반환합니다."""
     session = requests.Session()
-    retry = Retry(total=3, backoff_factor=0.5, status_forcelist=[500, 502, 503, 504])
+    retry = Retry(total=3, backoff_factor=0.5, status_forcelist=[429, 500, 502, 503, 504])
     adapter = HTTPAdapter(max_retries=retry)
     session.mount("https://", adapter)
     return session
