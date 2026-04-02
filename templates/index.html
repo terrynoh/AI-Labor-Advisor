@@ -661,6 +661,8 @@
     let lastSessionId = null;
     let lastDownloadToken = null;
     let currentInv = null;
+    let currentAccessToken = null;
+    let paymentIdempotencyKey = null;
 
     const EVIDENCE_MAP = {
         wrongful_termination: [
@@ -925,16 +927,22 @@
     }
 
     async function submitPayment(token) {
+        // 이중 결제 방지: idempotency_key 생성 (1회)
+        if (!paymentIdempotencyKey) {
+            paymentIdempotencyKey = crypto.randomUUID();
+        }
         try {
             const resp = await postJSON("/create-payment", {
                 token,
                 case_data: step1Data,
                 analysis_result: analysisResult,
+                idempotency_key: paymentIdempotencyKey,
             });
             const data = await resp.json();
             if (!resp.ok) { alert(data.error || "การชำระเงินไม่สำเร็จ"); return; }
 
             if (data.inv) currentInv = data.inv;
+            if (data.access_token) currentAccessToken = data.access_token;
 
             if (data.authorize_uri) {
                 window.location.href = data.authorize_uri;  // 3DS 리다이렉트
@@ -1203,7 +1211,7 @@
 
     function resetAll() {
         selectedIssues.clear(); checkedEvidence.clear();
-        analysisResult={}; step1Data={}; lastSessionId=null; lastDownloadToken=null;
+        analysisResult={}; step1Data={}; lastSessionId=null; lastDownloadToken=null; currentAccessToken=null; paymentIdempotencyKey=null;
         document.querySelectorAll(".issue-chip").forEach(el=>el.classList.remove("checked"));
         document.querySelectorAll("input[type=text],input[type=number],textarea,select")
             .forEach(el=>{el.value=el.id==="p_filed_province"?"กรุงเทพมหานคร":"";});
@@ -1215,9 +1223,11 @@
 
     // 3DS 결제 후 브라우저 복귀 감지
     (function checkPaymentReturn() {
-        const inv = new URLSearchParams(window.location.search).get("inv");
+        const params = new URLSearchParams(window.location.search);
+        const inv = params.get("inv");
         if (!inv) return;
         currentInv = inv;
+        currentAccessToken = params.get("access_token") || null;
         history.replaceState({}, "", window.location.pathname);  // URL 정리
 
         // 대기 메시지 표시
@@ -1236,7 +1246,7 @@
             const statusEl = document.getElementById("poll-status");
             if (statusEl) statusEl.textContent = `กำลังตรวจสอบการชำระเงิน... (${attempt + 1}/10)`;
             try {
-                const res  = await fetch(`/get-order-data/${inv}`);
+                const res  = await fetch(`/get-order-data/${inv}?access_token=${encodeURIComponent(currentAccessToken || '')}`);
                 const data = await res.json();
                 if (data.paid) {
                     step1Data      = data.case_data;

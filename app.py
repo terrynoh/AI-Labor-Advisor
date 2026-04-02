@@ -7,11 +7,11 @@ import logging
 import secrets
 import shutil
 import tempfile
-import threading
 import datetime
 import requests
 import omise
 import anthropic as _anthropic_module
+import db as _db
 from flask import Flask, request, jsonify, render_template, session, send_file
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
@@ -51,6 +51,10 @@ LINE_CHANNEL_ACCESS_TOKEN = os.environ.get("LINE_CHANNEL_ACCESS_TOKEN", "")
 ADMIN_LINE_USER_ID        = os.environ.get("ADMIN_LINE_USER_ID", "")
 PACKAGE_PRICE_SATANG      = 10000  # 100 THB
 
+# Omise API secret — 모듈 수준에서 1회 설정
+if OMISE_SECRET_KEY:
+    omise.api_secret = OMISE_SECRET_KEY
+
 # ─────────────────────────────────────────────
 #  Anthropic 클라이언트 (모듈 수준 — 요청마다 재생성 금지)
 # ─────────────────────────────────────────────
@@ -67,14 +71,9 @@ limiter = Limiter(
 )
 
 # ─────────────────────────────────────────────
-#  인메모리 스토어 + 스레드 락
+#  SQLite 영구 저장소 초기화
 # ─────────────────────────────────────────────
-_pending_orders: dict = {}  # inv → {case_data, analysis_result, _paid, charge_id, _ts}
-_pdf_store:      dict = {}  # sid → {demand_path, petition_path, download_token, _ts}
-_orders_lock = threading.Lock()
-
-_ORDER_TTL = 24 * 3600   # 24시간
-_PDF_TTL   = 1  * 3600   # 1시간
+_db.init_db()
 
 
 # ─────────────────────────────────────────────
@@ -145,21 +144,7 @@ def _notify_admin(invoice: str, name: str, error: str, refunded: bool):
 
 def _evict_expired():
     """만료된 항목 정리 (각 요청 시 호출)."""
-    now = time.time()
-    with _orders_lock:
-        for inv in [k for k, v in _pending_orders.items() if now - v.get("_ts", 0) > _ORDER_TTL]:
-            _pending_orders.pop(inv, None)
-            logger.debug("_pending_orders 만료 제거: %s", inv)
-    for sid in [k for k, v in _pdf_store.items() if now - v.get("_ts", 0) > _PDF_TTL]:
-        entry = _pdf_store.pop(sid, {})
-        for path_key in ("demand_path", "petition_path"):
-            p = entry.get(path_key)
-            if p and os.path.exists(p):
-                try:
-                    os.remove(p)
-                except OSError:
-                    pass
-        logger.debug("_pdf_store 만료 제거: %s", sid)
+    _db.evict_expired()
 
 
 # ─────────────────────────────────────────────
@@ -501,12 +486,11 @@ def generate_package():
             return jsonify({"error": "complainant_name required"}), 400
 
         # 결제 검증: inv가 결제 완료 상태인지 확인
-        with _orders_lock:
-            order = _pending_orders.get(inv, {})
-            if not order.get("_paid"):
-                logger.warning("generate_package: 미결제 또는 유효하지 않은 inv=%s", inv)
-                return jsonify({"error": "결제가 확인되지 않았습니다."}), 403
-            retry_count = order.get("retry_count", 0)
+        order = _db.get_order(inv)
+        if not order or not order.get("_paid"):
+            logger.warning("generate_package: 미결제 또는 유효하지 않은 inv=%s", inv)
+            return jsonify({"error": "결제가 확인되지 않았습니다."}), 403
+        retry_count = order.get("retry_count", 0)
 
         tmp_dir = tempfile.mkdtemp()
 
@@ -558,12 +542,7 @@ def generate_package():
             sid            = str(uuid.uuid4())
             download_token = secrets.token_urlsafe(32)
             _evict_expired()
-            _pdf_store[sid] = {
-                "demand_path":   demand_pdf_path,
-                "petition_path": petition_pdf_path,
-                "download_token": download_token,
-                "_ts":           time.time(),
-            }
+            _db.save_pdf(sid, demand_pdf_path, petition_pdf_path, download_token)
 
             return jsonify({"ok": True, "session_id": sid, "download_token": download_token})
 
@@ -571,13 +550,9 @@ def generate_package():
             logger.error("generate_package PDF 생성 오류: %s", e, exc_info=True)
             shutil.rmtree(tmp_dir, ignore_errors=True)
 
-            # ── retry_count 증가 (스레드 안전) ──────────────────────────
-            with _orders_lock:
-                if inv in _pending_orders:
-                    new_retry = _pending_orders[inv].get("retry_count", 0) + 1
-                    _pending_orders[inv]["retry_count"] = new_retry
-                else:
-                    new_retry = retry_count + 1
+            # ── retry_count 증가 ─────────────────────────────────────
+            new_retry = retry_count + 1
+            _db.update_order(inv, retry_count=new_retry)
 
             # ── 1회 실패: 재시도 유도 ────────────────────────────────────
             if new_retry < 2:
@@ -588,14 +563,22 @@ def generate_package():
                 }), 500
 
             # ── 2회 실패: 환불 + LINE 알림 ──────────────────────────────
+            # 이중 환불 방지: DB에서 refunded 플래그 확인
+            order_now = _db.get_order(inv) or {}
+            if order_now.get("refunded"):
+                logger.info("generate_package: 이미 환불 처리됨 inv=%s", inv)
+                return jsonify({
+                    "error": "เกิดข้อผิดพลาดในการสร้างเอกสาร ระบบได้คืนเงินให้อัตโนมัติแล้ว กรุณาติดต่อ Line OA เพื่อขอความช่วยเหลือ",
+                    "retry": False, "refunded": True,
+                }), 500
+
             refunded  = False
-            with _orders_lock:
-                charge_id = _pending_orders.get(inv, {}).get("charge_id", "")
+            charge_id = order_now.get("charge_id", "")
             if charge_id and OMISE_SECRET_KEY:
                 try:
-                    omise.api_secret = OMISE_SECRET_KEY
                     omise.Charge.retrieve(charge_id).refund(amount=PACKAGE_PRICE_SATANG)
                     refunded = True
+                    _db.update_order(inv, refunded=1)
                     logger.info("Omise 자동 환불 완료: charge=%s inv=%s", charge_id, inv)
                 except Exception as refund_err:
                     logger.error("Omise 자동 환불 실패: charge=%s err=%s", charge_id, refund_err)
@@ -622,16 +605,24 @@ def generate_package():
 #  PDF 다운로드 (download_token 인증 필수)
 # ─────────────────────────────────────────────
 
-@app.route("/download/demand-letter/<session_id>")
-def download_demand_letter(session_id):
+def _verify_pdf_token(session_id):
+    """PDF 다운로드 토큰 검증 공통 헬퍼. (entry, error_response) 반환."""
     token = request.args.get("token", "")
-    entry = _pdf_store.get(session_id)
+    entry = _db.get_pdf(session_id)
     if not entry:
-        return jsonify({"error": "File not found or expired"}), 404
+        return None, (jsonify({"error": "File not found or expired"}), 404)
     stored_token = entry.get("download_token", "")
     if not stored_token or not _hmac.compare_digest(token, stored_token):
         logger.warning("PDF 다운로드 인증 실패: sid=%s ip=%s", session_id, request.remote_addr)
-        return jsonify({"error": "Unauthorized"}), 403
+        return None, (jsonify({"error": "Unauthorized"}), 403)
+    return entry, None
+
+
+@app.route("/download/demand-letter/<session_id>")
+def download_demand_letter(session_id):
+    entry, err = _verify_pdf_token(session_id)
+    if err:
+        return err
     if not os.path.exists(entry["demand_path"]):
         return jsonify({"error": "File not found"}), 404
     return send_file(
@@ -644,14 +635,9 @@ def download_demand_letter(session_id):
 
 @app.route("/download/petition/<session_id>")
 def download_petition(session_id):
-    token = request.args.get("token", "")
-    entry = _pdf_store.get(session_id)
-    if not entry:
-        return jsonify({"error": "File not found or expired"}), 404
-    stored_token = entry.get("download_token", "")
-    if not stored_token or not _hmac.compare_digest(token, stored_token):
-        logger.warning("PDF 다운로드 인증 실패: sid=%s ip=%s", session_id, request.remote_addr)
-        return jsonify({"error": "Unauthorized"}), 403
+    entry, err = _verify_pdf_token(session_id)
+    if err:
+        return err
     if not os.path.exists(entry["petition_path"]):
         return jsonify({"error": "File not found"}), 404
     return send_file(
@@ -677,30 +663,39 @@ def create_payment():
     token           = body.get("token", "")
     case_data       = body.get("case_data", {})
     analysis_result = body.get("analysis_result", {})
+    idem_key        = body.get("idempotency_key", "")
 
     if not token:
         return jsonify({"error": "token required"}), 400
     if not OMISE_SECRET_KEY:
         return jsonify({"error": "payment not configured"}), 503
 
+    # ── 이중 결제 방지: idempotency_key 검사 ───────────────────
+    if idem_key:
+        existing = _db.find_by_idempotency_key(idem_key)
+        if existing:
+            logger.info("create_payment: 중복 요청 감지 idem_key=%s inv=%s", idem_key, existing["inv"])
+            return jsonify({
+                "ok": True,
+                "inv": existing["inv"],
+                "paid": existing["_paid"],
+                "access_token": existing["access_token"],
+                "authorize_uri": None,
+            })
+
     _evict_expired()
-    inv = uuid.uuid4().hex[:16]
-    with _orders_lock:
-        _pending_orders[inv] = {
-            "case_data":       case_data,
-            "analysis_result": analysis_result,
-            "_paid":           False,
-            "_ts":             time.time(),
-        }
+    inv          = uuid.uuid4().hex[:16]
+    access_token = secrets.token_urlsafe(32)
+
+    _db.save_order(inv, case_data, analysis_result,
+                   access_token=access_token, idempotency_key=idem_key)
 
     try:
-        omise.api_secret = OMISE_SECRET_KEY
-
         base_url = APP_BASE_URL or request.url_root.rstrip("/")
         if base_url.startswith("http://"):
             base_url = "https://" + base_url[len("http://"):]
 
-        return_uri = f"{base_url}/payment-return?inv={inv}"
+        return_uri = f"{base_url}/payment-return?inv={inv}&access_token={access_token}"
         logger.info("[PAYMENT] return_uri=%s", return_uri)
 
         charge = omise.Charge.create(
@@ -711,30 +706,19 @@ def create_payment():
             metadata={"invoice": inv},
         )
 
-        with _orders_lock:
-            if inv in _pending_orders:
-                _pending_orders[inv]["charge_id"]     = charge.id
-                _pending_orders[inv]["charge_status"] = charge.status
-                _pending_orders[inv]["last_event"]    = "create_payment"
-
+        _db.update_order(inv, charge_id=charge.id, charge_status=charge.status)
         logger.info("[PAYMENT] charge created: inv=%s status=%s", inv, charge.status)
 
         if charge.status == "successful":
-            with _orders_lock:
-                if inv in _pending_orders:
-                    _pending_orders[inv]["_paid"] = True
+            _db.update_order(inv, paid=1)
             logger.info("Omise 즉시 결제 완료: %s", inv)
-            return jsonify({"ok": True, "inv": inv, "paid": True})
+            return jsonify({"ok": True, "inv": inv, "paid": True, "access_token": access_token})
 
         if getattr(charge, "authorize_uri", None):
             logger.info("Omise 3DS 리다이렉트: %s", inv)
-            return jsonify({"ok": True, "inv": inv, "authorize_uri": charge.authorize_uri})
+            return jsonify({"ok": True, "inv": inv, "authorize_uri": charge.authorize_uri, "access_token": access_token})
 
         logger.warning("Omise 결제 실패: %s status=%s", inv, charge.status)
-        with _orders_lock:
-            if inv in _pending_orders:
-                _pending_orders[inv]["_paid"] = False
-
         return jsonify({
             "error": "การชำระเงินล้มเหลว",
             "status": charge.status
@@ -748,9 +732,11 @@ def create_payment():
 
 
 @app.route("/webhook/omise", methods=["POST"])
+@limiter.limit("60 per minute")
 def webhook_omise():
     """Omise 백엔드 웹훅 — charge 이벤트 수신.
     웹훅 body를 신뢰하지 않고, charge ID로 Omise API에 직접 조회하여 상태 확인.
+    금액도 검증하여 위조 charge 방지.
     """
     try:
         event     = request.get_json(force=True) or {}
@@ -768,8 +754,17 @@ def webhook_omise():
             logger.error("Omise 웹훅: OMISE_SECRET_KEY 미설정")
             return "Error", 500
 
-        omise.api_secret    = OMISE_SECRET_KEY
-        verified_charge     = omise.Charge.retrieve(charge_id)
+        verified_charge = omise.Charge.retrieve(charge_id)
+
+        # ── 금액 검증: 위조 charge 방지 ─────────────────────────
+        charge_amount = getattr(verified_charge, "amount", 0)
+        if charge_amount != PACKAGE_PRICE_SATANG:
+            logger.warning(
+                "Omise 웹훅: 금액 불일치 charge=%s expected=%s actual=%s",
+                charge_id, PACKAGE_PRICE_SATANG, charge_amount,
+            )
+            return "OK", 200
+
         metadata = getattr(verified_charge, "metadata", None)
         inv = ""
         if isinstance(metadata, dict):
@@ -780,15 +775,20 @@ def webhook_omise():
             except (KeyError, TypeError):
                 inv = ""
 
-        if inv and inv in _pending_orders:
-            with _orders_lock:
-                if inv in _pending_orders:
-                    _pending_orders[inv]["charge_id"]     = charge_id
-                    _pending_orders[inv]["charge_status"] = verified_charge.status
-                    _pending_orders[inv]["_paid"]         = (verified_charge.status == "successful")
+        if not inv:
+            return "OK", 200
+
+        order = _db.get_order(inv)
+        if order:
+            _db.update_order(
+                inv,
+                charge_id=charge_id,
+                charge_status=verified_charge.status,
+                paid=1 if verified_charge.status == "successful" else 0,
+            )
             logger.info("Omise 웹훅 상태 저장: inv=%s status=%s", inv, verified_charge.status)
-        elif inv:
-            logger.warning("Omise 웹훅: inv=%s not in _pending_orders", inv)
+        else:
+            logger.warning("Omise 웹훅: inv=%s not in DB", inv)
 
         return "OK", 200
     except Exception as e:
@@ -806,10 +806,17 @@ def payment_return():
 @app.route("/get-order-data/<inv>")
 @limiter.limit("30 per minute")
 def get_order_data(inv):
-    """결제 복귀 후 프론트에서 case_data/analysis_result 복원용 — charge_id 미노출"""
-    entry = _pending_orders.get(inv)
+    """결제 복귀 후 프론트에서 case_data/analysis_result 복원용 — access_token 인증 필수"""
+    token = request.args.get("access_token", "")
+    entry = _db.get_order(inv)
     if not entry:
         return jsonify({"error": "not found"}), 404
+
+    stored_token = entry.get("access_token", "")
+    if not token or not stored_token or not _hmac.compare_digest(token, stored_token):
+        logger.warning("get_order_data 인증 실패: inv=%s ip=%s", inv, request.remote_addr)
+        return jsonify({"error": "Unauthorized"}), 403
+
     return jsonify({
         "paid":            entry.get("_paid", False),
         "status":          entry.get("charge_status"),
