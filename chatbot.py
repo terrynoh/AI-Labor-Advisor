@@ -6,7 +6,16 @@ import anthropic
 from calculators import calculate_severance, calculate_leave, calculate_unpaid_wages
 
 logger = logging.getLogger(__name__)
-client = anthropic.Anthropic(api_key=os.environ.get("ANTHROPIC_API_KEY"))
+
+# 모듈 수준 클라이언트 — 요청마다 재생성 금지
+_client = None
+
+def _get_client():
+    """Anthropic 클라이언트 싱글턴 반환."""
+    global _client
+    if _client is None:
+        _client = anthropic.Anthropic(api_key=os.environ.get("ANTHROPIC_API_KEY"))
+    return _client
 
 MAX_TURNS = 20
 MAX_INPUT_LENGTH = 1000
@@ -62,7 +71,7 @@ def chat(session_messages, user_input):
     updated = session_messages + [{"role": "user", "content": user_input}]
 
     try:
-        response = client.messages.create(
+        response = _get_client().messages.create(
             model="claude-haiku-4-5-20251001",
             max_tokens=2048,
             system=SYSTEM_PROMPT,
@@ -74,13 +83,13 @@ def chat(session_messages, user_input):
 
     except anthropic.APIStatusError as e:
         logger.error("Claude API 오류 (status %s): %s", e.status_code, e.message)
-        return None, session_messages, "AI 서비스 일시 오류입니다. 잠시 후 다시 시도해주세요."
+        return None, session_messages, "เกิดข้อผิดพลาดในระบบ AI กรุณาลองใหม่อีกครั้งครับ"
     except anthropic.APIConnectionError as e:
         logger.error("Claude API 연결 오류: %s", e)
-        return None, session_messages, "네트워크 연결 오류입니다. 인터넷 연결을 확인해주세요."
+        return None, session_messages, "เกิดข้อผิดพลาดในการเชื่อมต่อ กรุณาตรวจสอบอินเทอร์เน็ตครับ"
     except Exception as e:
         logger.error("chat 예상치 못한 오류: %s", e, exc_info=True)
-        return None, session_messages, "시스템 오류가 발생했습니다. 잠시 후 다시 시도해주세요."
+        return None, session_messages, "เกิดข้อผิดพลาดในระบบ กรุณาลองใหม่อีกครั้งครับ"
 
 
 # ─────────────────────────────────────────────
@@ -159,7 +168,7 @@ def analyze_situation(form_data: dict) -> dict:
     prompt = ANALYSIS_PROMPT.format(user_info=user_info)
 
     try:
-        response = client.messages.create(
+        response = _get_client().messages.create(
             model="claude-haiku-4-5-20251001",
             max_tokens=2048,
             messages=[{"role": "user", "content": prompt}]
@@ -252,7 +261,7 @@ def generate_demand_letter_body(case_data: dict) -> str:
     prompt = DEMAND_LETTER_PROMPT.format(case_info=case_info)
 
     try:
-        response = client.messages.create(
+        response = _get_client().messages.create(
             model="claude-haiku-4-5-20251001",
             max_tokens=2048,
             messages=[{"role": "user", "content": prompt}]

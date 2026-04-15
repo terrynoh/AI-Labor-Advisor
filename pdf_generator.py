@@ -12,7 +12,10 @@ import platform
 import shutil
 import subprocess
 import tempfile
-from datetime import datetime
+from datetime import datetime, timezone, timedelta
+
+# 태국 시간대 (UTC+7)
+TZ_BANGKOK = timezone(timedelta(hours=7))
 
 logger = logging.getLogger(__name__)
 from docx import Document
@@ -38,7 +41,7 @@ def _to_thai_year(year: int) -> int:
     return year + 543
 
 def _today_parts():
-    now = datetime.now()
+    now = datetime.now(TZ_BANGKOK)
     return str(now.day), THAI_MONTHS[now.month], str(_to_thai_year(now.year))
 
 def _baht_text(amount) -> str:
@@ -293,7 +296,7 @@ def generate_demand_letter_pdf(data: dict, letter_body: str, output_path: str) -
 
     letter_body: AI-generated body text (Thai)
     """
-    now = datetime.now()
+    now = datetime.now(TZ_BANGKOK)
     thai_date = f"{now.day} {THAI_MONTHS[now.month]} {_to_thai_year(now.year)}"
 
     doc = Document()
