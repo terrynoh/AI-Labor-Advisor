@@ -194,7 +194,7 @@
         @media (max-width:360px) { .tenure-grid { grid-template-columns:1fr; } }
         .tenure-btn { padding:10px 8px; border:1.5px solid var(--gray-200); border-radius:10px; background:var(--gray-50); font-size:13px; font-weight:600; color:var(--gray-700); font-family:inherit; cursor:pointer; transition:all .2s; text-align:center; }
         .tenure-btn:hover { border-color:var(--green); background:var(--green-light); color:var(--green-dark); }
-        .tenure-btn.selected { border-color:var(--green); background:var(--green-light); color:var(--green-dark); box-shadow:0 0 0 3px rgba(6,199,85,0.15); }
+        .tenure-btn.selected { border-color:#065F46; background:#ECFDF5; color:#065F46; box-shadow:0 0 0 3px rgba(5,150,105,0.2); }
 
         /* ── v2 UX patches ─────────────────────────────────────── */
         .urgent-tips { background:#FEF2F2; border-left:4px solid #DC2626; border-radius:10px; padding:14px 16px; margin:0 0 16px 0; font-size:13.5px; color:#7F1D1D; line-height:1.65; }
@@ -315,8 +315,8 @@
     <div class="card">
         <div class="card-title">ข้อมูลส่วนตัว</div>
         <div class="form-grid">
-            <div class="field span2"><label>ชื่อ-นามสกุล <span class="req">*</span></label><input type="text" id="f_name" placeholder="เช่น สมชาย ใจดี"></div>
-            <div class="field"><label>อายุ <span class="req">*</span></label><input type="number" id="f_age" placeholder="32" min="15" max="80"></div>
+            <div class="field span2"><label>ชื่อ-นามสกุล <span class="req">*</span></label><input type="text" id="f_name" placeholder="เช่น สมชาย ใจดี" aria-required="true"></div>
+            <div class="field"><label>อายุ <span class="req">*</span></label><input type="number" id="f_age" placeholder="32" min="15" max="80" aria-required="true"></div>
             <div class="field"><label>รูปแบบการจ้างงาน <span class="req">*</span></label>
                 <select id="f_employment_type"><option value="">-- เลือก --</option><option>พนักงานประจำ</option><option>พนักงานสัญญาจ้าง</option><option>พนักงานรายวัน</option><option>พาร์ทไทม์</option></select>
             </div>
@@ -340,7 +340,7 @@
             <div class="field"><label>ขนาดบริษัท <span class="req">*</span></label>
                 <select id="f_company_size"><option value="">-- เลือก --</option><option>น้อยกว่า 5 คน</option><option>5–30 คน</option><option>31–100 คน</option><option>มากกว่า 100 คน</option></select>
             </div>
-            <div class="field"><label style="font-size:12px;white-space:nowrap">เงินเดือน (บาท/เดือน) <span class="req">*</span></label><input type="text" inputmode="numeric" pattern="[0-9,]*" id="f_monthly_salary" placeholder="20,000" autocomplete="off" aria-describedby="salary-hint"><small id="salary-hint" style="color:#6B7280;font-size:11px;display:block;margin-top:3px">เงินเดือนก่อนหักภาษี (เช่น 15,000)</small></div>
+            <div class="field"><label style="font-size:12px;white-space:nowrap">เงินเดือน (บาท/เดือน) <span class="req">*</span></label><input type="text" inputmode="numeric" pattern="[0-9,]*" id="f_monthly_salary" placeholder="20,000" autocomplete="off" aria-describedby="salary-hint" aria-required="true"><small id="salary-hint" style="color:#6B7280;font-size:11px;display:block;margin-top:3px">เงินเดือนก่อนหักภาษี (เช่น 15,000)</small></div>
             <div class="field"><label>วันลาพักร้อนคงเหลือ</label>
                 <div class="leave-row"><input type="number" id="f_unused_leave" placeholder="0" min="0" style="width:70px"><span>วัน จาก</span><input type="number" id="f_total_leave" placeholder="0" min="0" style="width:70px"><span>วัน</span></div>
             </div>
@@ -540,17 +540,17 @@
         <div class="card-title">ข้อมูลผู้ร้อง</div>
         <div class="form-grid">
             <div class="field span2"><label>ที่อยู่ปัจจุบัน <span class="req">*</span></label><input type="text" id="p_address" placeholder="บ้านเลขที่ ซอย ถนน"></div>
-            <div class="field"><label>จังหวัด <span class="req">*</span></label><input type="text" id="p_province" placeholder="กรุงเทพมหานคร"></div>
-            <div class="field"><label>เบอร์โทรศัพท์ <span class="req">*</span></label><input type="text" id="p_phone" placeholder="081-234-5678"></div>
-            <div class="field"><label>ตำแหน่งงาน <span class="req">*</span></label><input type="text" id="p_position" placeholder="พนักงานบัญชี"></div>
+            <div class="field"><label>จังหวัด <span class="req">*</span></label><input type="text" id="p_province" placeholder="กรุงเทพมหานคร" aria-required="true"></div>
+            <div class="field"><label>เบอร์โทรศัพท์ <span class="req">*</span></label><input type="text" id="p_phone" placeholder="081-234-5678" aria-required="true"></div>
+            <div class="field"><label>ตำแหน่งงาน <span class="req">*</span></label><input type="text" id="p_position" placeholder="พนักงานบัญชี" aria-required="true"></div>
         </div>
     </div>
     <div class="card">
         <div class="card-title">ข้อมูลนายจ้าง</div>
         <div class="form-grid">
-            <div class="field span2"><label>ชื่อบริษัท / นายจ้าง <span class="req">*</span></label><input type="text" id="p_employer_name" placeholder="บริษัท ABC จำกัด"></div>
+            <div class="field span2"><label>ชื่อบริษัท / นายจ้าง <span class="req">*</span></label><input type="text" id="p_employer_name" placeholder="บริษัท ABC จำกัด" aria-required="true"></div>
             <div class="field"><label>ประเภทธุรกิจ</label><input type="text" id="p_business_type" placeholder="ค้าปลีก"></div>
-            <div class="field"><label>จังหวัดที่ตั้งบริษัท <span class="req">*</span></label><input type="text" id="p_employer_province" placeholder="กรุงเทพมหานคร"></div>
+            <div class="field"><label>จังหวัดที่ตั้งบริษัท <span class="req">*</span></label><input type="text" id="p_employer_province" placeholder="กรุงเทพมหานคร" aria-required="true"></div>
             <div class="field span2"><label>ที่อยู่บริษัท</label><input type="text" id="p_employer_address" placeholder="บ้านเลขที่ ถนน"></div>
             <div class="field"><label>ชื่อ-นามสกุลนายจ้าง</label><input type="text" id="p_employer_person" placeholder="ถ้าทราบ"></div>
         </div>
@@ -558,14 +558,14 @@
         <div class="card">
         <div class="card-title">ช่วงเวลาทำงาน</div>
         <div class="form-grid">
-            <div class="field"><label>วันที่เริ่มทำงาน <span class="req">*</span></label><input type="date" id="p_start_date"></div>
-            <div class="field"><label>วันสุดท้ายที่ทำงาน <span class="req">*</span></label><input type="date" id="p_end_date"></div>
+            <div class="field"><label>วันที่เริ่มทำงาน <span class="req">*</span></label><input type="date" id="p_start_date" aria-required="true"></div>
+            <div class="field"><label>วันสุดท้ายที่ทำงาน <span class="req">*</span></label><input type="date" id="p_end_date" aria-required="true"></div>
         </div>
     </div>
     <div class="card">
         <div class="card-title">รายละเอียดการเรียกร้อง</div>
         <div class="form-grid full">
-            <div class="field"><label>รายละเอียดปัญหา <span class="req">*</span></label><textarea id="p_reason" rows="4" placeholder="อธิบายสถานการณ์โดยละเอียด เช่น วันที่ถูกเลิกจ้าง เหตุการณ์ที่เกิดขึ้น สิ่งที่นายจ้างแจ้ง ฯลฯ"></textarea></div>
+            <div class="field"><label>รายละเอียดปัญหา <span class="req">*</span></label><textarea id="p_reason" rows="4" placeholder="อธิบายสถานการณ์โดยละเอียด เช่น วันที่ถูกเลิกจ้าง เหตุการณ์ที่เกิดขึ้น สิ่งที่นายจ้างแจ้ง ฯลฯ" aria-required="true"></textarea></div>
             <div class="field"><label>จังหวัดที่ยื่นคำร้อง</label><input type="text" id="p_filed_province" value="กรุงเทพมหานคร"></div>
         </div>
     </div>
@@ -1216,11 +1216,18 @@
             div.dataset.id = item.id;
             div.dataset.label = item.label;
             div.innerHTML = `<div class="ev-check"></div><span style="font-size:18px;flex-shrink:0">${escHtml(item.icon)}</span><div class="ev-content"><div class="ev-label">${escHtml(item.label)}</div><div class="ev-reason">→ ${escHtml(item.reason)}</div></div>`;
-            div.onclick = () => {
-                div.classList.toggle("checked");
-                if (div.classList.contains("checked")) checkedEvidence.add(item.id);
+            div.setAttribute("role", "checkbox");
+            div.setAttribute("tabindex", "0");
+            div.setAttribute("aria-checked", "false");
+            div.setAttribute("aria-label", item.label);
+            const toggleCheck = () => {
+                const isChecked = div.classList.toggle("checked");
+                div.setAttribute("aria-checked", isChecked ? "true" : "false");
+                if (isChecked) checkedEvidence.add(item.id);
                 else checkedEvidence.delete(item.id);
             };
+            div.onclick = toggleCheck;
+            div.onkeydown = (e) => { if (e.key === " " || e.key === "Enter") { e.preventDefault(); toggleCheck(); } };
             container.appendChild(div);
         });
     }
