@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>น้องช้าง — รู้สิทธิ์ (Rusit)</title>
+    <title>น้องช้าง — Rusit (รู้สิทธิ์)</title>
     <meta name="omise-public-key" content="{{ omise_public_key }}">
     <meta name="csrf-token" content="{{ csrf_token }}">
     <script src="https://cdn.omise.co/omise.js"></script>
@@ -29,10 +29,8 @@
         /* Header */
         .header { background:var(--green); color:white; padding:14px 18px; display:flex; align-items:center; justify-content:space-between; box-shadow:0 3px 14px rgba(6,199,85,0.38); flex-shrink:0; position:sticky; top:0; z-index:100; }
         .header-left { display:flex; align-items:center; gap:10px; }
-        .header-title { font-size:17px; font-weight:800; letter-spacing:0.2px; line-height:1.15; }
-        .header-title .brand-en { font-weight:400; font-size:11.5px; opacity:0.72; margin-left:5px; letter-spacing:0.3px; }
-        .header-sub { font-size:11.5px; opacity:.9; margin-top:2px; }
-        .header-sub .free-tag { background:rgba(255,255,255,0.22); padding:1px 7px; border-radius:10px; font-weight:700; margin-left:4px; }
+        .header-title { font-size:15px; font-weight:800; }
+        .header-sub { font-size:11px; opacity:.88; margin-top:1px; }
         .reset-btn { background:rgba(255,255,255,0.2); border:1.5px solid rgba(255,255,255,0.45); color:white; padding:6px 14px; border-radius:20px; cursor:pointer; font-size:12px; font-weight:700; font-family:inherit; transition:background .2s; white-space:nowrap; }
         .reset-btn:hover { background:rgba(255,255,255,0.35); }
         .header.deep { background:var(--deep); box-shadow:0 3px 14px rgba(10,92,54,0.4); }
@@ -41,8 +39,8 @@
         /* Progress */
         .progress-bar { background:white; padding:12px 16px 8px; border-bottom:1px solid var(--gray-200); flex-shrink:0; }
         .steps-row { display:flex; align-items:center; margin-bottom:6px; }
-        .step-dot { width:32px; height:32px; border-radius:50%; background:var(--gray-200); color:var(--gray-500); font-size:11px; font-weight:700; display:flex; align-items:center; justify-content:center; flex-shrink:0; transition:all .3s; position:relative; z-index:1; }
-        .step-dot.active { background:var(--green); color:white; box-shadow:0 0 0 4px rgba(5,150,105,0.2); }
+        .step-dot { width:26px; height:26px; border-radius:50%; background:var(--gray-200); color:var(--gray-500); font-size:11px; font-weight:700; display:flex; align-items:center; justify-content:center; flex-shrink:0; transition:all .3s; position:relative; z-index:1; }
+        .step-dot.active { background:var(--green); color:white; box-shadow:0 0 0 4px var(--green-mid); }
         .step-dot.done { background:var(--green); color:white; }
         .step-dot.done::after { content:"✓"; }
         .step-dot.done span { display:none; }
@@ -194,25 +192,7 @@
         @media (max-width:360px) { .tenure-grid { grid-template-columns:1fr; } }
         .tenure-btn { padding:10px 8px; border:1.5px solid var(--gray-200); border-radius:10px; background:var(--gray-50); font-size:13px; font-weight:600; color:var(--gray-700); font-family:inherit; cursor:pointer; transition:all .2s; text-align:center; }
         .tenure-btn:hover { border-color:var(--green); background:var(--green-light); color:var(--green-dark); }
-        .tenure-btn.selected { border-color:#065F46; background:#ECFDF5; color:#065F46; box-shadow:0 0 0 3px rgba(5,150,105,0.2); }
-
-        /* ── v2 UX patches ─────────────────────────────────────── */
-        .urgent-tips { background:#FEF2F2; border-left:4px solid #DC2626; border-radius:10px; padding:14px 16px; margin:0 0 16px 0; font-size:13.5px; color:#7F1D1D; line-height:1.65; }
-        .urgent-tips-title { font-weight:700; margin-bottom:8px; font-size:14px; }
-        .urgent-tips ul { margin:0; padding-left:20px; }
-        .urgent-tips li { margin-bottom:6px; }
-        .urgent-tips li:last-child { margin-bottom:0; }
-        .urgent-tips li strong { color:#991B1B; }
-        .urgent-mini { background:#FFF1F2; color:#9F1239; border-radius:8px; padding:8px 12px; font-size:12.5px; margin-bottom:12px; border:1px solid #FECACA; line-height:1.5; }
-        .prefill-notice { background:#FEF3C7; border:1px solid #F59E0B; border-radius:12px; padding:12px 14px; margin:0 0 14px 0; font-size:13.5px; color:#92400E; line-height:1.55; }
-        .prefill-notice[hidden] { display:none; }
-        .field-error { color:#DC2626; font-size:12.5px; margin-top:4px; line-height:1.4; }
-        .field-warning { border-color:#F59E0B !important; background:#FFFBEB !important; }
-        .price-transition { background:#ECFDF5; border:1px solid #10B981; border-radius:10px; padding:12px 14px; margin:12px 0; font-size:13.5px; color:#065F46; line-height:1.6; }
-        .price-transition strong { color:#047857; }
-        #inlineToast { position:fixed; bottom:24px; left:50%; transform:translateX(-50%); max-width:360px; width:calc(100% - 32px); background:#991B1B; color:white; padding:14px 18px; border-radius:12px; box-shadow:0 10px 25px rgba(0,0,0,0.2); z-index:9999; font-size:14px; line-height:1.5; opacity:0; transition:opacity 0.25s; pointer-events:none; }
-        #inlineToast.show { opacity:1; pointer-events:auto; }
-        .v2-badge { position:fixed; top:8px; right:8px; background:#7C3AED; color:white; padding:4px 10px; border-radius:12px; font-size:11px; font-weight:700; z-index:10000; letter-spacing:0.3px; box-shadow:0 2px 6px rgba(0,0,0,0.15); }
+        .tenure-btn.selected { border-color:var(--green); background:var(--green-light); color:var(--green-dark); box-shadow:0 0 0 3px rgba(6,199,85,0.15); }
 
         .step-view { display:none; }
         .step-view.active { display:block; }
@@ -222,19 +202,18 @@
     </style>
 </head>
 <body>
-<div class="v2-badge" title="UX 개선 미리보기 (원본은 '/'에서 계속 서비스)">🎨 v2 PREVIEW</div>
 
 <!-- Header -->
 <div class="header">
     <div class="header-left">
         <svg width="32" height="32" viewBox="0 0 48 48"><ellipse cx="9" cy="22" rx="6" ry="9" fill="#a78bfa"/><ellipse cx="39" cy="22" rx="6" ry="9" fill="#a78bfa"/><circle cx="24" cy="22" r="13" fill="#c4b5fd"/><circle cx="19.8" cy="19.5" r="1.3" fill="#3b0764"/><circle cx="29.8" cy="19.5" r="1.3" fill="#3b0764"/><path d="M21 30 Q18 35 20 39 Q22 42 24 39 Q23 34 22 30Z" fill="#a78bfa"/></svg>
-        <div><div class="header-title">รู้สิทธิ์<span class="brand-en">Rusit</span></div><div class="header-sub">ที่ปรึกษากฎหมายแรงงานไทย<span class="free-tag">ฟรี</span></div></div>
+        <div><div class="header-title">Rusit (รู้สิทธิ์)</div><div class="header-sub">ที่ปรึกษากฎหมายแรงงานไทย</div></div>
     </div>
     <button class="reset-btn" onclick="resetAll()">🔄 เริ่มใหม่</button>
 </div>
 
 <!-- Progress (4 steps) -->
-<div class="progress-bar" id="progressBar" style="display:none" role="progressbar" aria-valuemin="1" aria-valuemax="4" aria-valuenow="1" aria-label="ขั้นตอนที่ 1 จาก 4">
+<div class="progress-bar" id="progressBar" style="display:none">
     <div class="steps-row">
         <div class="step-dot active" id="dot1"><span>1</span></div>
         <div class="step-line" id="line1"></div>
@@ -245,10 +224,10 @@
         <div class="step-dot" id="dot4"><span>4</span></div>
     </div>
     <div class="steps-labels">
-        <div class="step-label active" id="lbl1">กรอกข้อมูล</div>
-        <div class="step-label" id="lbl2">ดูสิทธิ์</div>
-        <div class="step-label" id="lbl3">สร้างเอกสาร</div>
-        <div class="step-label" id="lbl4">เสร็จสิ้น</div>
+        <div class="step-label active" id="lbl1">ข้อมูล</div>
+        <div class="step-label" id="lbl2">ผล</div>
+        <div class="step-label" id="lbl3">เอกสาร</div>
+        <div class="step-label" id="lbl4">เสร็จ</div>
     </div>
 </div>
 
@@ -263,45 +242,32 @@
         <div class="welcome-name">น้องช้าง 🐘</div>
         <div class="welcome-tagline">ถูกเลิกจ้าง ค่าจ้างค้าง หรือถูกละเมิดสิทธิ์?<br><strong style="color:#111827">ใน 3 นาที รู้เลยว่าได้เงินเท่าไหร่</strong></div>
 
-        <div class="urgent-tips" role="region" aria-label="ข้อควรระวังก่อนเริ่ม">
-            <div class="urgent-tips-title">⏰ สำคัญก่อนเริ่ม — ต้องรู้ 3 ข้อ</div>
-            <ul>
-                <li><strong>อายุความ 2 ปี</strong> นับจากวันถูกละเมิดสิทธิ์ — ยิ่งช้า ยิ่งเสียเปรียบ</li>
-                <li><strong>อย่าลาออกเอง</strong> แม้ถูกกดดัน — ต้องระบุว่า "ถูกเลิกจ้าง" เท่านั้น</li>
-                <li><strong>เก็บหลักฐานทุกอย่าง</strong> — ห้ามลบ LINE / ส่งคืนเอกสารก่อนได้เงิน</li>
-            </ul>
-        </div>
-
         <div style="width:100%;background:white;border-radius:12px;padding:16px 18px;margin-bottom:20px;box-shadow:0 2px 8px rgba(0,0,0,0.08)">
             <div style="display:flex;flex-direction:column;gap:8px">
-                <div style="display:flex;align-items:center;gap:8px;font-size:13.5px;color:#374151"><span style="color:var(--green);font-size:16px">✔</span> วิเคราะห์สิทธิ์<strong>ฟรี</strong> ตามกฎหมายแรงงานไทย</div>
-                <div style="display:flex;align-items:center;gap:8px;font-size:13.5px;color:#374151"><span style="color:var(--green);font-size:16px">✔</span> เอกสารพร้อมยื่นสำนักงานแรงงาน <span style="color:#059669;font-weight:700">เพียง 100 ฿</span> <small style="color:#6B7280">(เลือกไม่ใช้ก็ได้)</small></div>
-                <div style="display:flex;align-items:center;gap:8px;font-size:13.5px;color:#374151"><span style="color:var(--green);font-size:16px">✔</span> ไม่ต้องใส่เลขบัตรประชาชน</div>
+                <div style="display:flex;align-items:center;gap:8px;font-size:13.5px;color:#374151"><span style="color:var(--green);font-size:16px">✔</span> คำนวณตามกฎหมายแรงงานไทย อัตโนมัติ</div>
+                <div style="display:flex;align-items:center;gap:8px;font-size:13.5px;color:#374151"><span style="color:var(--green);font-size:16px">✔</span> สร้างเอกสารที่ใช้ยื่นสำนักงานแรงงานได้จริง</div>
+                <div style="display:flex;align-items:center;gap:8px;font-size:13.5px;color:#374151"><span style="color:var(--green);font-size:16px">✔</span> เริ่มต้นฟรี — ไม่ต้องกรอกข้อมูลส่วนตัว</div>
             </div>
         </div>
 
         <div class="welcome-bubbles">
-            <div class="wb-row"><div class="wb-avatar"><svg width="20" height="20" viewBox="0 0 48 48"><circle cx="24" cy="22" r="13" fill="#c4b5fd"/><circle cx="19.8" cy="19.5" r="1.3" fill="#3b0764"/><circle cx="29.8" cy="19.5" r="1.3" fill="#3b0764"/></svg></div><div class="wb-bubble bot">สวัสดี 😊 เล่าสถานการณ์มาได้เลย เดี๋ยวช่วยคำนวณค่าชดเชยและสิทธิ์ตามกฎหมายให้</div></div>
+            <div class="wb-row"><div class="wb-avatar"><svg width="20" height="20" viewBox="0 0 48 48"><circle cx="24" cy="22" r="13" fill="#c4b5fd"/><circle cx="19.8" cy="19.5" r="1.3" fill="#3b0764"/><circle cx="29.8" cy="19.5" r="1.3" fill="#3b0764"/></svg></div><div class="wb-bubble bot">สวัสดีครับ 😊 บอกสถานการณ์ให้ผมทราบ ผมจะคำนวณค่าชดเชยและสิทธิ์ที่คุณควรได้รับตามกฎหมายให้ครับ</div></div>
             <div class="wb-row right"><div class="wb-bubble user">โดนไล่ออกกะทันหัน ไม่รู้จะทำยังไง</div></div>
-            <div class="wb-row"><div class="wb-avatar"><svg width="20" height="20" viewBox="0 0 48 48"><circle cx="24" cy="22" r="13" fill="#c4b5fd"/><circle cx="19.8" cy="19.5" r="1.3" fill="#3b0764"/><circle cx="29.8" cy="19.5" r="1.3" fill="#3b0764"/></svg></div><div class="wb-bubble bot">เข้าใจสถานการณ์ 💪 กรอกข้อมูลนิดเดียว<br>จะบอกว่าได้เงินเท่าไหร่ และต้องทำอะไรบ้าง</div></div>
+            <div class="wb-row"><div class="wb-avatar"><svg width="20" height="20" viewBox="0 0 48 48"><circle cx="24" cy="22" r="13" fill="#c4b5fd"/><circle cx="19.8" cy="19.5" r="1.3" fill="#3b0764"/><circle cx="29.8" cy="19.5" r="1.3" fill="#3b0764"/></svg></div><div class="wb-bubble bot">เข้าใจครับ ไม่ต้องกังวล 💪 กรอกข้อมูลนิดเดียว ผมจะบอกว่าคุณมีสิทธิ์รับเงินเท่าไหร่ และต้องทำอะไรบ้างครับ</div></div>
         </div>
 
-        <button class="btn-start" onclick="startForm()">👉 ตรวจสิทธิ์ของฉันเลย</button>
+        <button class="btn-start" onclick="startForm()">👉 ตรวจสอบสิทธิ์ของฉันตอนนี้เลย</button>
         <p class="btn-start-sub">ใช้เวลาประมาณ 3 นาที · ฟรี · ไม่ต้องใส่เลขบัตรประชาชน</p>
     </div>
 </div>
 
 <!-- STEP 1 -->
 <div class="step-view" id="step1">
-    <div id="prefillNotice" class="prefill-notice" hidden>
-        <strong>ℹ️ ข้อมูลจาก LINE</strong> — เราเติมข้อมูลให้แล้ว <strong>โปรดตรวจสอบก่อนดำเนินการต่อ</strong> ชื่อ-นามสกุลต้องเป็นตามบัตรประชาชนเท่านั้น
-    </div>
-    <div class="urgent-mini">⏰ <strong>อายุความ 2 ปี</strong> — ยิ่งยื่นเร็ว ยิ่งได้เปรียบ</div>
     <div class="card" style="background:linear-gradient(135deg,#f0fdf4,#dcfce7);border:1.5px solid var(--green-mid)">
         <div style="display:flex;gap:10px;align-items:flex-start">
             <span style="font-size:22px">🐘</span>
             <div style="font-size:13.5px;color:#14532d;line-height:1.75">
-                <strong>กรอกให้ครบ</strong> ยิ่งครบ ยิ่งวิเคราะห์แม่นยำ
+                <strong>กรอกข้อมูลให้ครบ</strong> เพื่อให้ผมวิเคราะห์สิทธิ์ตามกฎหมายแรงงานไทยได้แม่นยำที่สุดครับ
             </div>
         </div>
     </div>
@@ -315,8 +281,8 @@
     <div class="card">
         <div class="card-title">ข้อมูลส่วนตัว</div>
         <div class="form-grid">
-            <div class="field span2"><label>ชื่อ-นามสกุล <span class="req">*</span></label><input type="text" id="f_name" placeholder="เช่น สมชาย ใจดี" aria-required="true"></div>
-            <div class="field"><label>อายุ <span class="req">*</span></label><input type="number" id="f_age" placeholder="32" min="15" max="80" aria-required="true"></div>
+            <div class="field span2"><label>ชื่อ-นามสกุล <span class="req">*</span></label><input type="text" id="f_name" placeholder="เช่น สมชาย ใจดี"></div>
+            <div class="field"><label>อายุ <span class="req">*</span></label><input type="number" id="f_age" placeholder="32" min="15" max="80"></div>
             <div class="field"><label>รูปแบบการจ้างงาน <span class="req">*</span></label>
                 <select id="f_employment_type"><option value="">-- เลือก --</option><option>พนักงานประจำ</option><option>พนักงานสัญญาจ้าง</option><option>พนักงานรายวัน</option><option>พาร์ทไทม์</option></select>
             </div>
@@ -340,7 +306,7 @@
             <div class="field"><label>ขนาดบริษัท <span class="req">*</span></label>
                 <select id="f_company_size"><option value="">-- เลือก --</option><option>น้อยกว่า 5 คน</option><option>5–30 คน</option><option>31–100 คน</option><option>มากกว่า 100 คน</option></select>
             </div>
-            <div class="field"><label style="font-size:12px;white-space:nowrap">เงินเดือน (บาท/เดือน) <span class="req">*</span></label><input type="text" inputmode="numeric" pattern="[0-9,]*" id="f_monthly_salary" placeholder="20,000" autocomplete="off" aria-describedby="salary-hint" aria-required="true"><small id="salary-hint" style="color:#6B7280;font-size:11px;display:block;margin-top:3px">เงินเดือนก่อนหักภาษี (เช่น 15,000)</small></div>
+            <div class="field"><label style="font-size:12px;white-space:nowrap">เงินเดือน (บาท/เดือน) <span class="req">*</span></label><input type="number" id="f_monthly_salary" placeholder="20000" min="0" step="1"></div>
             <div class="field"><label>วันลาพักร้อนคงเหลือ</label>
                 <div class="leave-row"><input type="number" id="f_unused_leave" placeholder="0" min="0" style="width:70px"><span>วัน จาก</span><input type="number" id="f_total_leave" placeholder="0" min="0" style="width:70px"><span>วัน</span></div>
             </div>
@@ -361,7 +327,7 @@
         <input type="checkbox" id="pdpa_consent" style="margin-top:2px;flex-shrink:0;accent-color:var(--green)" onchange="document.getElementById('step1SubmitBtn').disabled=!this.checked">
         <span>ข้าพเจ้ายอมรับ <a href="/privacy" target="_blank" style="color:var(--green);text-decoration:underline">นโยบายความเป็นส่วนตัว</a> และยินยอมให้เก็บข้อมูลเพื่อวิเคราะห์สิทธิ์แรงงาน</span>
     </label>
-    <button class="btn-primary" id="step1SubmitBtn" onclick="submitStep1()" disabled>🔍 ตรวจสิทธิ์ของฉัน</button>
+    <button class="btn-primary" id="step1SubmitBtn" onclick="submitStep1()" disabled>🔍 วิเคราะห์สิทธิ์ของฉัน</button>
     <p class="disclaimer" style="margin-top:12px">⚠️ ข้อมูลนี้เป็นคำแนะนำเบื้องต้น ไม่ใช่คำปรึกษาทางกฎหมาย</p>
 </div>
 
@@ -385,11 +351,6 @@
             <div style="font-size:12px;color:#0A5C36;font-weight:600;margin-bottom:4px">💰 ขั้นต่ำที่คุณมีสิทธิ์เรียกร้องตามกฎหมาย</div>
             <div style="font-size:34px;font-weight:800;color:var(--deep);letter-spacing:-1px" id="totalAmountDisplay">฿0</div>
             <div style="font-size:11px;color:#6b7280;margin-top:4px" id="totalAmountNote">ตาม พ.ร.บ.คุ้มครองแรงงาน 2541 · มาตรา 118</div>
-        </div>
-
-        <div class="price-transition">
-          <p>📊 <strong>ผลวิเคราะห์ข้างต้น — ฟรี</strong></p>
-          <p>ถ้าต้องการเอกสารพร้อมยื่น (คร.7 + หนังสือบอกกล่าว) ค่าบริการ <strong>100 ฿</strong> ครั้งเดียว</p>
         </div>
 
         <!-- 확정/가능/추정 분류 -->
@@ -427,7 +388,7 @@
     <div class="card" style="border:2px solid var(--deep);background:linear-gradient(135deg,var(--deep-light),#e8f3ec)">
         <div style="text-align:center;margin-bottom:16px">
             <div style="font-size:13px;font-weight:700;color:var(--deep);margin-bottom:4px">📋 เพื่อยื่นคำร้องกับกรมแรงงานได้จริง</div>
-            <div style="font-size:22px;font-weight:800;color:var(--navy);line-height:1.3">น้องช้างช่วยเตรียม<br>แพ็กเกจเอกสารครบชุดให้</div>
+            <div style="font-size:22px;font-weight:800;color:var(--navy);line-height:1.3">น้องช้างช่วยเตรียม<br>แพ็กเกจเอกสารครบชุดให้ได้ครับ</div>
         </div>
 
         <!-- 패키지 내용 -->
@@ -522,11 +483,11 @@
     <!-- Evidence checklist with reasons -->
     <div class="card">
         <div class="card-title">📁 เอกสารที่คุณมีอยู่แล้ว</div>
-        <div style="font-size:13px;color:#374151;margin-bottom:12px;line-height:1.7">เลือกเอกสารที่มีอยู่ น้องช้างจะสรุปให้ว่าขาดอะไรไป</div>
+        <div style="font-size:13px;color:#374151;margin-bottom:12px;line-height:1.7">เลือกเอกสารที่มีอยู่ น้องช้างจะสรุปให้ว่าขาดอะไรไปครับ</div>
         <div id="evidenceCheckList"></div>
         <div style="padding:12px 14px;background:#fffbeb;border:1.5px solid #fcd34d;border-radius:10px;margin-top:4px">
-            <div style="font-size:12.5px;font-weight:700;color:#92400e;margin-bottom:4px">⚠️ ยังไม่มีเอกสารบางส่วน? ไม่เป็นไร</div>
-            <div style="font-size:12px;color:#78350f;line-height:1.6">ยื่นได้แม้ไม่ครบ เจ้าหน้าที่จะช่วยรวบรวมระหว่างการไต่สวน</div>
+            <div style="font-size:12.5px;font-weight:700;color:#92400e;margin-bottom:4px">⚠️ ยังไม่มีเอกสารบางส่วน? ไม่เป็นไรครับ</div>
+            <div style="font-size:12px;color:#78350f;line-height:1.6">ยื่นได้แม้ไม่ครบ เจ้าหน้าที่จะช่วยรวบรวมระหว่างการไต่สวนครับ</div>
         </div>
     </div>
 
@@ -540,17 +501,17 @@
         <div class="card-title">ข้อมูลผู้ร้อง</div>
         <div class="form-grid">
             <div class="field span2"><label>ที่อยู่ปัจจุบัน <span class="req">*</span></label><input type="text" id="p_address" placeholder="บ้านเลขที่ ซอย ถนน"></div>
-            <div class="field"><label>จังหวัด <span class="req">*</span></label><input type="text" id="p_province" placeholder="กรุงเทพมหานคร" aria-required="true"></div>
-            <div class="field"><label>เบอร์โทรศัพท์ <span class="req">*</span></label><input type="text" id="p_phone" placeholder="081-234-5678" aria-required="true"></div>
-            <div class="field"><label>ตำแหน่งงาน <span class="req">*</span></label><input type="text" id="p_position" placeholder="พนักงานบัญชี" aria-required="true"></div>
+            <div class="field"><label>จังหวัด <span class="req">*</span></label><input type="text" id="p_province" placeholder="กรุงเทพมหานคร"></div>
+            <div class="field"><label>เบอร์โทรศัพท์ <span class="req">*</span></label><input type="text" id="p_phone" placeholder="081-234-5678"></div>
+            <div class="field"><label>ตำแหน่งงาน <span class="req">*</span></label><input type="text" id="p_position" placeholder="พนักงานบัญชี"></div>
         </div>
     </div>
     <div class="card">
         <div class="card-title">ข้อมูลนายจ้าง</div>
         <div class="form-grid">
-            <div class="field span2"><label>ชื่อบริษัท / นายจ้าง <span class="req">*</span></label><input type="text" id="p_employer_name" placeholder="บริษัท ABC จำกัด" aria-required="true"></div>
+            <div class="field span2"><label>ชื่อบริษัท / นายจ้าง <span class="req">*</span></label><input type="text" id="p_employer_name" placeholder="บริษัท ABC จำกัด"></div>
             <div class="field"><label>ประเภทธุรกิจ</label><input type="text" id="p_business_type" placeholder="ค้าปลีก"></div>
-            <div class="field"><label>จังหวัดที่ตั้งบริษัท <span class="req">*</span></label><input type="text" id="p_employer_province" placeholder="กรุงเทพมหานคร" aria-required="true"></div>
+            <div class="field"><label>จังหวัดที่ตั้งบริษัท <span class="req">*</span></label><input type="text" id="p_employer_province" placeholder="กรุงเทพมหานคร"></div>
             <div class="field span2"><label>ที่อยู่บริษัท</label><input type="text" id="p_employer_address" placeholder="บ้านเลขที่ ถนน"></div>
             <div class="field"><label>ชื่อ-นามสกุลนายจ้าง</label><input type="text" id="p_employer_person" placeholder="ถ้าทราบ"></div>
         </div>
@@ -558,14 +519,14 @@
         <div class="card">
         <div class="card-title">ช่วงเวลาทำงาน</div>
         <div class="form-grid">
-            <div class="field"><label>วันที่เริ่มทำงาน <span class="req">*</span></label><input type="date" id="p_start_date" aria-required="true"></div>
-            <div class="field"><label>วันสุดท้ายที่ทำงาน <span class="req">*</span></label><input type="date" id="p_end_date" aria-required="true"></div>
+            <div class="field"><label>วันที่เริ่มทำงาน <span class="req">*</span></label><input type="date" id="p_start_date"></div>
+            <div class="field"><label>วันสุดท้ายที่ทำงาน <span class="req">*</span></label><input type="date" id="p_end_date"></div>
         </div>
     </div>
     <div class="card">
         <div class="card-title">รายละเอียดการเรียกร้อง</div>
         <div class="form-grid full">
-            <div class="field"><label>รายละเอียดปัญหา <span class="req">*</span></label><textarea id="p_reason" rows="4" placeholder="อธิบายสถานการณ์โดยละเอียด เช่น วันที่ถูกเลิกจ้าง เหตุการณ์ที่เกิดขึ้น สิ่งที่นายจ้างแจ้ง ฯลฯ" aria-required="true"></textarea></div>
+            <div class="field"><label>รายละเอียดปัญหา <span class="req">*</span></label><textarea id="p_reason" rows="4" placeholder="อธิบายสถานการณ์โดยละเอียด เช่น วันที่ถูกเลิกจ้าง เหตุการณ์ที่เกิดขึ้น สิ่งที่นายจ้างแจ้ง ฯลฯ"></textarea></div>
             <div class="field"><label>จังหวัดที่ยื่นคำร้อง</label><input type="text" id="p_filed_province" value="กรุงเทพมหานคร"></div>
         </div>
     </div>
@@ -577,19 +538,19 @@
 
 <!-- LOADING PDF -->
 <div class="step-view" id="stepPdfLoading">
-    <div class="loading-card"><div class="spinner"></div><p>น้องช้างกำลังสร้างเอกสาร…<br><span style="font-size:12px;color:#9ca3af">อาจใช้เวลา 30–60 วินาที</span></p></div>
+    <div class="loading-card"><div class="spinner"></div><p>น้องช้างกำลังสร้างเอกสาร…<br><span style="font-size:12px;color:#9ca3af">อาจใช้เวลา 30–60 วินาทีครับ</span></p></div>
 </div>
 
 <!-- STEP 4 — Result + Doc status + Timeline -->
 <div class="step-view" id="step4">
     <div class="done-card" style="margin-bottom:14px">
         <div style="font-size:40px;margin-bottom:8px">✅</div>
-        <h3 style="font-size:17px;font-weight:800;color:#111827;margin-bottom:4px">📄 เอกสารพร้อมยื่นแล้ว!</h3>
+        <h3 style="font-size:17px;font-weight:800;color:#111827;margin-bottom:4px">📄 เอกสารพร้อมยื่นแล้วครับ!</h3>
         <p style="font-size:13px;color:#6b7280;margin-bottom:12px">ดาวน์โหลดและยื่นได้ทันที ตรงตามมาตรฐานสำนักงานแรงงาน</p>
         <!-- LINE 인앱 브라우저 경고 배너 -->
         <div id="line-browser-notice" style="display:none;background:#fff3cd;border:1.5px solid #fbbf24;border-radius:10px;padding:10px 12px;margin-bottom:12px;text-align:left">
             <div style="font-size:12.5px;font-weight:700;color:#92400e;margin-bottom:4px">⚠️ ดาวน์โหลดไม่ได้ใน LINE</div>
-            <div style="font-size:12px;color:#78350f;line-height:1.6">กด <strong>⋮</strong> มุมขวาล่าง → <strong>"เปิดในเบราว์เซอร์อื่น"</strong> แล้วกดดาวน์โหลดอีกครั้ง</div>
+            <div style="font-size:12px;color:#78350f;line-height:1.6">กด <strong>⋮</strong> มุมขวาล่าง → <strong>"เปิดในเบราว์เซอร์อื่น"</strong> แล้วกดดาวน์โหลดอีกครั้งครับ</div>
         </div>
         <!-- 개별 PDF 다운로드 버튼 2개 -->
         <button class="btn-primary" onclick="downloadDemandLetter()" style="margin-top:0">📄 ดาวน์โหลด หนังสือบอกกล่าว</button>
@@ -617,7 +578,7 @@
         <div id="docMissSection" style="margin-top:12px">
             <div style="font-size:12.5px;font-weight:700;color:#991b1b;margin-bottom:8px">⚠️ 📎 เอกสารเสริม (ถ้ามี) — ยิ่งมี ยิ่งได้เปรียบ</div>
             <div id="docMissList"></div>
-            <div style="margin-top:10px;padding:10px 12px;background:#fffbeb;border-radius:8px;font-size:12px;color:#78350f;line-height:1.6">💡 ยื่นได้แม้ไม่ครบ เจ้าหน้าที่จะช่วยรวบรวมระหว่างการไต่สวน</div>
+            <div style="margin-top:10px;padding:10px 12px;background:#fffbeb;border-radius:8px;font-size:12px;color:#78350f;line-height:1.6">💡 ยื่นได้แม้ไม่ครบ เจ้าหน้าที่จะช่วยรวบรวมระหว่างการไต่สวนครับ</div>
         </div>
     </div>
 
@@ -664,7 +625,7 @@
 <div class="step-view" id="stepDone">
     <div class="done-card">
         <div style="font-size:48px;margin-bottom:10px">🐘</div>
-        <h3 style="font-size:17px;font-weight:800;color:#111827;margin-bottom:8px">ขอบคุณที่ใช้บริการ 🙏</h3>
+        <h3 style="font-size:17px;font-weight:800;color:#111827;margin-bottom:8px">ขอบคุณที่ใช้บริการครับ</h3>
         <p style="font-size:13.5px;color:#6b7280;line-height:1.7;margin-bottom:20px">หากมีข้อสงสัย สามารถปรึกษาได้ที่<br><strong>กรมสวัสดิการและคุ้มครองแรงงาน</strong><br>โทร. 1506 กด 3 ฟรีตลอด 24 ชั่วโมง</p>
         <button class="btn-primary" onclick="resetAll()">🔄 เริ่มใหม่</button>
     </div>
@@ -762,8 +723,6 @@
             const line = document.getElementById(`line${i}`);
             if (line) line.className = "step-line" + (i < active ? " done" : "");
         }
-        const pb = document.getElementById("progressBar");
-        if (pb) { pb.setAttribute("aria-valuenow", active); pb.setAttribute("aria-label", `ขั้นตอนที่ ${active} จาก 4`); }
     }
 
     function showView(id) {
@@ -791,77 +750,27 @@
     function startForm() { showView("step1"); updateProgress(1); }
 
     // ── LINE 리다이렉트 URL 파라미터 pre-fill ──────────────────────────
-    // ── v2 공용 헬퍼 ───────────────────────────────────────────
-    function showFieldError(inputEl, message) {
-        const parent = inputEl.parentNode;
-        let err = parent.querySelector(":scope > .field-error");
-        if (!err) {
-            err = document.createElement("div");
-            err.className = "field-error";
-            err.setAttribute("role", "alert");
-            parent.appendChild(err);
-        }
-        err.textContent = "⚠️ " + message;
-    }
-    function clearAllFieldErrors() {
-        document.querySelectorAll(".field-error").forEach(el => el.remove());
-        document.querySelectorAll(".field-warning").forEach(el => {
-            el.classList.remove("field-warning");
-            el.removeAttribute("aria-invalid");
-        });
-    }
-    function showInlineToast(message, durationMs) {
-        let toast = document.getElementById("inlineToast");
-        if (!toast) {
-            toast = document.createElement("div");
-            toast.id = "inlineToast";
-            toast.setAttribute("role", "alert");
-            toast.setAttribute("aria-live", "assertive");
-            document.body.appendChild(toast);
-        }
-        toast.textContent = message;
-        requestAnimationFrame(() => toast.classList.add("show"));
-        clearTimeout(toast._hideTimer);
-        toast._hideTimer = setTimeout(() => toast.classList.remove("show"), durationMs || 6000);
-    }
-
     (function prefillFromUrl() {
         const p = new URLSearchParams(window.location.search);
         if (!p.get("from") && !p.get("name")) return;  // 파라미터 없으면 skip
 
-        const prefilled = [];
-        const name   = (p.get("name") || "").trim();
+        const name   = p.get("name")       || "";
         const age    = p.get("age")        || "";
         const salary = p.get("salary")     || "";
         const years  = p.get("work_years") || "";
         const issue  = p.get("issue")      || "";
 
-        // 이름 검증: 2자 이상 + 태국어/영문 포함 + 순수 숫자 금지
-        const nameValid = name.length >= 2 && /[\u0E00-\u0E7Fa-zA-Z]/.test(name) && !/^\d+$/.test(name);
-
-        if (name) {
-            const el = document.getElementById("f_name");
-            el.value = name;
-            if (!nameValid) {
-                el.classList.add("field-warning");
-                el.setAttribute("aria-invalid", "true");
-                showFieldError(el, "ชื่อที่ได้จาก LINE อาจไม่ถูกต้อง กรุณาแก้ไขเป็นชื่อ-นามสกุลตามบัตรประชาชน");
-            } else {
-                prefilled.push("ชื่อ");
-            }
-        }
-        if (age)    { document.getElementById("f_age").value = age; prefilled.push("อายุ"); }
-        if (salary) {
-            const el = document.getElementById("f_monthly_salary");
-            el.value = parseInt(salary, 10).toLocaleString("en-US");
-            prefilled.push("เงินเดือน");
-        }
+        if (name)   document.getElementById("f_name").value   = name;
+        if (age)    document.getElementById("f_age").value    = age;
+        if (salary) document.getElementById("f_monthly_salary").value = parseInt(salary);
         if (years) {
+            // LINE에서 온 float값으로 해당 버튼 자동 선택 (부동소수점 비교 안전하게 처리)
             const targetYears = parseFloat(years).toFixed(1);
             const btn = Array.from(document.querySelectorAll("#tenureGrid .tenure-btn"))
                 .find(b => parseFloat(b.dataset.years).toFixed(1) === targetYears);
-            if (btn) { selectTenure(btn); prefilled.push("อายุงาน"); }
+            if (btn) selectTenure(btn);
         }
+
         if (issue) {
             document.querySelectorAll(".issue-chip").forEach(chip => {
                 if ((chip.getAttribute("onclick") || "").includes(`'${issue}'`)) {
@@ -869,13 +778,6 @@
                     selectedIssues.add(issue);
                 }
             });
-            prefilled.push("ปัญหาที่พบ");
-        }
-
-        // 배너 노출
-        if (prefilled.length > 0) {
-            const notice = document.getElementById("prefillNotice");
-            if (notice) notice.hidden = false;
         }
 
         // LINE에서 왔으면 welcome 화면 스킵, 바로 step1으로
@@ -883,19 +785,6 @@
             showView("step1");
             updateProgress(1);
         }
-    })();
-
-    // 월급 천 단위 자동 포맷팅
-    (function initSalaryFormatter() {
-        const el = document.getElementById("f_monthly_salary");
-        if (!el) return;
-        const format = () => {
-            const raw = el.value.replace(/[^\d]/g, "");
-            el.value = raw ? parseInt(raw, 10).toLocaleString("en-US") : "";
-        };
-        el.addEventListener("input", format);
-        el.addEventListener("blur", format);
-        if (el.value) format();
     })();
 
     function selectTenure(btn) {
@@ -907,77 +796,28 @@
     function toggleIssue(el, value) {
         event.preventDefault();
         el.classList.toggle("checked");
-        if (el.classList.contains("checked")) {
-            selectedIssues.add(value);
-            if (value === "forced_resignation") {
-                showInlineToast("⚠️ สำคัญ: อย่าเซ็นใบลาออกเด็ดขาด — ถ้ายังไม่เซ็น ถือเป็นการ 'ถูกเลิกจ้าง' ได้เงินชดเชยมากกว่า");
-            }
-        } else {
-            selectedIssues.delete(value);
-        }
+        if (el.classList.contains("checked")) selectedIssues.add(value);
+        else selectedIssues.delete(value);
     }
 
     async function submitStep1() {
-        clearAllFieldErrors();
-
-        const fields = [
-            { id:"f_name", label:"ชื่อ-นามสกุล" },
-            { id:"f_age", label:"อายุ" },
-            { id:"f_employment_type", label:"รูปแบบการจ้างงาน" },
-            { id:"f_work_years", label:"อายุงาน", group:"tenureGrid" },
-            { id:"f_company_size", label:"ขนาดบริษัท" },
-            { id:"f_monthly_salary", label:"เงินเดือน" },
-        ];
-        const missing = [];
-        for (const f of fields) {
-            const el = document.getElementById(f.id);
-            if (!el) continue;
-            const v = (el.value || "").toString().trim();
-            if (!v) {
-                missing.push(f);
-                const target = f.group ? document.getElementById(f.group) : el;
-                showFieldError(target, "กรุณากรอก" + f.label);
-            }
-        }
-        if (selectedIssues.size === 0) {
-            const issueGrid = document.querySelector("#step1 .chips-grid, #step1 .issue-grid, #issueGrid");
-            if (issueGrid) {
-                showFieldError(issueGrid, "กรุณาเลือกปัญหาที่พบอย่างน้อย 1 ข้อ");
-                missing.push({ id: issueGrid.id || "issueGrid" });
-            } else {
-                showInlineToast("กรุณาเลือกปัญหาที่พบอย่างน้อย 1 ข้อ");
-                missing.push({ id: "issues" });
-            }
-        }
-        if (missing.length > 0) {
-            const firstId = missing[0].group || missing[0].id;
-            const firstEl = document.getElementById(firstId);
-            if (firstEl) {
-                firstEl.scrollIntoView({ behavior:"smooth", block:"center" });
-                setTimeout(() => firstEl.focus?.(), 300);
-            }
-            return;
-        }
-
-        // 월급: 쉼표 제거하고 정수화
-        const rawSalary = document.getElementById("f_monthly_salary").value.replace(/[^\d]/g, "");
-        const salary = parseInt(rawSalary, 10);
-        if (!salary || salary < 1 || salary > 10_000_000) {
-            showFieldError(document.getElementById("f_monthly_salary"), "เงินเดือนไม่ถูกต้อง กรุณาตรวจสอบ");
-            document.getElementById("f_monthly_salary").focus();
-            return;
-        }
-
         const name = document.getElementById("f_name").value.trim();
         const age = document.getElementById("f_age").value.trim();
+        const salary = document.getElementById("f_monthly_salary").value.trim();
         const years = document.getElementById("f_work_years").value.trim();
         const empType = document.getElementById("f_employment_type").value;
         const compSize = document.getElementById("f_company_size").value;
 
+        if (!name||!age||!salary||!years||!empType||!compSize) {
+            if (!years) { alert("กรุณาเลือกอายุงานครับ"); return; }
+            alert("กรุณากรอกข้อมูลที่มี * ให้ครบครับ"); return;
+        }
+        if (selectedIssues.size === 0) { alert("กรุณาเลือกปัญหาที่พบอย่างน้อย 1 ข้อครับ"); return; }
+
         step1Data = {
             name, age:parseInt(age),
             work_years:parseFloat(years),
-            monthly_salary:salary,
+            monthly_salary:parseInt(salary),
             unused_leave_days:parseInt(document.getElementById("f_unused_leave").value)||0,
             total_leave_days:parseInt(document.getElementById("f_total_leave").value)||0,
             employment_type:empType,
@@ -1074,21 +914,7 @@
         if (btn) btn.innerHTML = `📦 เริ่มเตรียมแพ็กเกจเอกสาร — <span style="font-size:1.3em;color:#FFD700;font-weight:900">${PACKAGE_PRICE} ฿</span>`;
     }
 
-    (function() {
-        if (!/Line\//i.test(navigator.userAgent)) return;
-        const banner = document.createElement("div");
-        banner.id = "line-header-banner";
-        banner.style.cssText = "background:#FFF7ED;border-bottom:2px solid #F97316;padding:8px 18px;font-size:12.5px;color:#9A3412;display:flex;align-items:center;gap:8px;line-height:1.5;flex-shrink:0;";
-        banner.innerHTML = "<span style='font-size:16px'>⚠️</span><span>เปิดอยู่ใน <strong>LINE Browser</strong> — การดาวน์โหลดเอกสารอาจไม่ทำงาน กรุณาเปิดใหม่ใน Chrome / Safari</span>";
-        const header = document.querySelector(".header");
-        if (header && header.parentNode) header.parentNode.insertBefore(banner, header.nextSibling);
-    })();
-
     function proceedToPay() {
-        if (/Line\//i.test(navigator.userAgent)) {
-            const ok = confirm("คุณกำลังใช้ LINE Browser\n\nการดาวน์โหลดเอกสารอาจไม่ทำงาน\nแนะนำให้เปิดใหม่ใน Chrome หรือ Safari\n\nต้องการดำเนินการต่อหรือไม่?");
-            if (!ok) return;
-        }
         const publicKey = document.querySelector('meta[name="omise-public-key"]').content;
         if (!publicKey) { alert("ไม่พบการตั้งค่าการชำระเงิน กรุณาติดต่อเราครับ"); return; }
         OmiseCard.configure({ publicKey });
@@ -1230,18 +1056,11 @@
             div.dataset.id = item.id;
             div.dataset.label = item.label;
             div.innerHTML = `<div class="ev-check"></div><span style="font-size:18px;flex-shrink:0">${escHtml(item.icon)}</span><div class="ev-content"><div class="ev-label">${escHtml(item.label)}</div><div class="ev-reason">→ ${escHtml(item.reason)}</div></div>`;
-            div.setAttribute("role", "checkbox");
-            div.setAttribute("tabindex", "0");
-            div.setAttribute("aria-checked", "false");
-            div.setAttribute("aria-label", item.label);
-            const toggleCheck = () => {
-                const isChecked = div.classList.toggle("checked");
-                div.setAttribute("aria-checked", isChecked ? "true" : "false");
-                if (isChecked) checkedEvidence.add(item.id);
+            div.onclick = () => {
+                div.classList.toggle("checked");
+                if (div.classList.contains("checked")) checkedEvidence.add(item.id);
                 else checkedEvidence.delete(item.id);
             };
-            div.onclick = toggleCheck;
-            div.onkeydown = (e) => { if (e.key === " " || e.key === "Enter") { e.preventDefault(); toggleCheck(); } };
             container.appendChild(div);
         });
     }
