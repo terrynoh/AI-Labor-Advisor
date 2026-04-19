@@ -219,6 +219,18 @@
         .disclaimer { font-size:11.5px; color:var(--gray-400); text-align:center; padding:4px 0 8px; }
         .petition-note { background:var(--blue-light); border-radius:10px; padding:11px 14px; font-size:12.5px; color:#1e40af; margin-bottom:16px; line-height:1.6; }
         .done-card { background:white; border-radius:var(--radius); box-shadow:var(--shadow); padding:28px 20px; text-align:center; animation:slideUp .35s ease both; }
+        /* Sticky pay bar */
+        .sticky-pay-bar { position:fixed; bottom:0; left:50%; transform:translateX(-50%); width:min(560px,100%); background:var(--navy); color:white; padding:10px 16px; z-index:200; box-shadow:0 -4px 20px rgba(0,0,0,0.25); display:none; align-items:center; justify-content:space-between; gap:10px; }
+        .sticky-pay-bar.show { display:flex; }
+        .sticky-pay-bar-btn { background:#FFD700; color:#0F2D4A; border:none; border-radius:10px; padding:9px 16px; font-size:13px; font-weight:800; font-family:inherit; cursor:pointer; white-space:nowrap; flex-shrink:0; }
+        /* Optional field accordion */
+        .opt-toggle-row { font-size:12.5px; color:var(--green-dark); font-weight:700; cursor:pointer; display:flex; align-items:center; gap:6px; margin-top:6px; padding-top:8px; border-top:1px dashed var(--gray-200); user-select:none; }
+        .opt-field { display:none; }
+        .opt-field.open { display:flex; }
+        /* StepDone next-steps */
+        .next-step-item { display:flex; align-items:flex-start; gap:12px; padding:10px 0; border-bottom:1px solid var(--gray-200); }
+        .next-step-item:last-child { border-bottom:none; }
+        .btn-outline-green { width:100%; background:white; color:var(--green-dark); border:2px solid var(--green); padding:13px; border-radius:12px; font-size:14px; font-weight:700; font-family:inherit; cursor:pointer; margin-top:10px; }
     </style>
 </head>
 <body>
@@ -548,8 +560,13 @@
         <div class="card-title">ข้อมูลนายจ้าง</div>
         <div class="form-grid">
             <div class="field span2"><label>ชื่อบริษัท / นายจ้าง <span class="req">*</span></label><input type="text" id="p_employer_name" placeholder="บริษัท ABC จำกัด" aria-required="true"></div>
-            <div class="field"><label>ประเภทธุรกิจ</label><input type="text" id="p_business_type" placeholder="ค้าปลีก"></div>
             <div class="field"><label>จังหวัดที่ตั้งบริษัท <span class="req">*</span></label><input type="text" id="p_employer_province" placeholder="กรุงเทพมหานคร" aria-required="true"></div>
+        </div>
+        <div class="opt-toggle-row" onclick="toggleOptFields(this)" aria-expanded="false">
+            <span class="opt-arrow">▶</span> เพิ่มข้อมูลเสริม (ไม่บังคับ — ช่วยให้เอกสารครบสมบูรณ์ขึ้น)
+        </div>
+        <div class="form-grid" id="employerOptFields" style="display:none">
+            <div class="field"><label>ประเภทธุรกิจ</label><input type="text" id="p_business_type" placeholder="ค้าปลีก"></div>
             <div class="field span2"><label>ที่อยู่บริษัท</label><input type="text" id="p_employer_address" placeholder="บ้านเลขที่ ถนน"></div>
             <div class="field"><label>ชื่อ-นามสกุลนายจ้าง</label><input type="text" id="p_employer_person" placeholder="ถ้าทราบ"></div>
         </div>
@@ -565,6 +582,11 @@
         <div class="card-title">รายละเอียดการเรียกร้อง</div>
         <div class="form-grid full">
             <div class="field"><label>รายละเอียดปัญหา <span class="req">*</span></label><textarea id="p_reason" rows="4" placeholder="อธิบายสถานการณ์โดยละเอียด เช่น วันที่ถูกเลิกจ้าง เหตุการณ์ที่เกิดขึ้น สิ่งที่นายจ้างแจ้ง ฯลฯ" aria-required="true"></textarea></div>
+        </div>
+        <div class="opt-toggle-row" onclick="toggleOptFields(this)" aria-expanded="false">
+            <span class="opt-arrow">▶</span> จังหวัดที่ยื่นคำร้อง (ค่าเริ่มต้น: กรุงเทพมหานคร)
+        </div>
+        <div class="form-grid" id="detailsOptFields" style="display:none">
             <div class="field"><label>จังหวัดที่ยื่นคำร้อง</label><input type="text" id="p_filed_province" value="กรุงเทพมหานคร"></div>
         </div>
     </div>
@@ -590,9 +612,9 @@
             <div style="font-size:12.5px;font-weight:700;color:#92400e;margin-bottom:4px">⚠️ ดาวน์โหลดไม่ได้ใน LINE</div>
             <div style="font-size:12px;color:#78350f;line-height:1.6">กด <strong>⋮</strong> มุมขวาล่าง → <strong>"เปิดในเบราว์เซอร์อื่น"</strong> แล้วกดดาวน์โหลดอีกครั้ง</div>
         </div>
-        <!-- 개별 PDF 다운로드 버튼 2개 -->
-        <button class="btn-primary" onclick="downloadDemandLetter()" style="margin-top:0">📄 ดาวน์โหลด หนังสือบอกกล่าว</button>
-        <button class="btn-primary" onclick="downloadPetition()" style="margin-top:8px;background:#166534">📄 ดาวน์โหลด คร.7 คำร้อง</button>
+        <!-- 개별 PDF 다운로드 버튼 2개 — คร.7 먼저(primary), หนังสือ는 outline -->
+        <button class="btn-primary" onclick="downloadPetition()" style="margin-top:0" aria-label="ดาวน์โหลดแบบฟอร์ม คร.7 คำร้อง">📋 ดาวน์โหลด คร.7 คำร้อง <span style="font-size:11px;opacity:0.85;font-weight:600">← ยื่นที่กรมแรงงาน</span></button>
+        <button onclick="downloadDemandLetter()" style="width:100%;margin-top:8px;padding:13px;border-radius:12px;background:white;color:var(--navy);border:2px solid var(--navy);font-size:14px;font-weight:700;font-family:inherit;cursor:pointer" aria-label="ดาวน์โหลดหนังสือบอกกล่าวทวงถาม">📨 ดาวน์โหลด หนังสือบอกกล่าว <span style="font-size:11px;opacity:0.7;font-weight:600">← ส่งนายจ้างก่อน</span></button>
 
         <!-- Upsell: consultation -->
         <div style="margin-top:16px;padding:14px 16px;background:#faf5ff;border:1.5px solid #d8b4fe;border-radius:12px;text-align:left">
@@ -663,10 +685,39 @@
 <div class="step-view" id="stepDone">
     <div class="done-card">
         <div style="font-size:48px;margin-bottom:10px">🐘</div>
-        <h3 style="font-size:17px;font-weight:800;color:#111827;margin-bottom:8px">ขอบคุณที่ใช้บริการ 🙏</h3>
-        <p style="font-size:13.5px;color:#6b7280;line-height:1.7;margin-bottom:20px">หากมีข้อสงสัย สามารถปรึกษาได้ที่<br><strong>กรมสวัสดิการและคุ้มครองแรงงาน</strong><br>โทร. 1506 กด 3 ฟรีตลอด 24 ชั่วโมง</p>
-        <button class="btn-primary" onclick="resetAll()">🔄 เริ่มใหม่</button>
+        <h3 style="font-size:17px;font-weight:800;color:#111827;margin-bottom:4px">ขอบคุณที่ใช้บริการ 🙏</h3>
+        <p style="font-size:13px;color:#6b7280;margin-bottom:16px">รู้สิทธิ์ไว้ก่อน — เป็นประโยชน์เสมอ</p>
+
+        <!-- ขั้นตอนถัดไป -->
+        <div style="background:#f0fdf4;border:1.5px solid #bbf7d0;border-radius:12px;padding:14px 16px;text-align:left;margin-bottom:14px">
+            <div style="font-size:12.5px;font-weight:700;color:#166534;margin-bottom:10px">📌 สิ่งที่ควรทำต่อไป</div>
+            <div class="next-step-item">
+                <div style="font-size:20px;flex-shrink:0">⏰</div>
+                <div><div style="font-size:13px;font-weight:700;color:#111827">อายุความ 2 ปี — ยังมีเวลา</div><div style="font-size:12px;color:#6b7280;margin-top:2px">นับจากวันถูกเลิกจ้าง ยิ่งยื่นเร็วยิ่งได้เปรียบ</div></div>
+            </div>
+            <div class="next-step-item">
+                <div style="font-size:20px;flex-shrink:0">📋</div>
+                <div><div style="font-size:13px;font-weight:700;color:#111827">เก็บหลักฐานทุกอย่างไว้ก่อน</div><div style="font-size:12px;color:#6b7280;margin-top:2px">สัญญาจ้าง สลิปเงินเดือน ข้อความ LINE — ห้ามลบ</div></div>
+            </div>
+            <div class="next-step-item">
+                <div style="font-size:20px;flex-shrink:0">📞</div>
+                <div><div style="font-size:13px;font-weight:700;color:#111827">ปรึกษาฟรีได้เลย</div><div style="font-size:12px;color:#6b7280;margin-top:2px">กรมสวัสดิการและคุ้มครองแรงงาน โทร. 1506 กด 3</div></div>
+            </div>
+        </div>
+
+        <!-- เปลี่ยนใจ -->
+        <button class="btn-outline-green" onclick="showView('step2');updateProgress(2);">📦 เปลี่ยนใจ — สร้างเอกสารพร้อมยื่น 100 ฿</button>
+        <button class="btn-primary" onclick="resetAll()" style="margin-top:8px">🔄 เริ่มใหม่</button>
     </div>
+</div>
+
+<!-- Sticky pay bar (Step2만 표시) -->
+<div class="sticky-pay-bar" id="stickyPayBar">
+    <div style="flex:1;min-width:0">
+        <div style="font-size:11px;opacity:0.75;margin-bottom:2px">วิเคราะห์สิทธิ์แล้ว ✅</div>
+        <div style="font-size:13.5px;font-weight:800">สร้างเอกสารพร้อมยื่น — <span id="stickyPayPrice">100 ฿</span></div>
+    </div>
+    <button class="sticky-pay-bar-btn" onclick="proceedToPay()">📦 สร้างเอกสาร</button>
 </div>
 
 </div><!-- /main -->
@@ -771,6 +822,8 @@
         document.getElementById("mainContent").scrollTop = 0;
         const hideProgress = ["stepWelcome","stepLoading","stepPdfLoading","stepDone"];
         document.getElementById("progressBar").style.display = hideProgress.includes(id) ? "none" : "block";
+        const stickyBar = document.getElementById("stickyPayBar");
+        if (stickyBar) stickyBar.classList.toggle("show", id === "step2");
 
         // 3단계 색상 전환
         const header = document.querySelector(".header");
@@ -1019,8 +1072,15 @@
         document.getElementById("urgencyBadge2").innerHTML =
             `<span style="display:inline-flex;align-items:center;gap:5px;padding:4px 14px;border-radius:20px;font-size:12px;font-weight:700;background:${urgBg};color:${urgColor}">${urgText}</span>`;
 
-        // Diagnosis
-        document.getElementById("diagnosisStep2").textContent = data.diagnosis || "";
+        // Diagnosis — hide card if empty
+        const diag2 = document.getElementById("diagnosisStep2");
+        const diag2Card = diag2 ? diag2.closest(".card") : null;
+        if (diag2) diag2.textContent = data.diagnosis || "";
+        if (diag2Card) diag2Card.style.display = data.diagnosis ? "" : "none";
+
+        // Sticky bar price
+        const stickyPrice = document.getElementById("stickyPayPrice");
+        if (stickyPrice) stickyPrice.textContent = PACKAGE_PRICE + " ฿";
 
         // Rights
         const rList = document.getElementById("rightsStep2");
@@ -1082,6 +1142,14 @@
         const header = document.querySelector(".header");
         if (header && header.parentNode) header.parentNode.insertBefore(banner, header.nextSibling);
     })();
+
+    function toggleOptFields(toggleEl) {
+        const grid = toggleEl.nextElementSibling;
+        const isOpen = grid.style.display !== "none";
+        grid.style.display = isOpen ? "none" : "grid";
+        toggleEl.querySelector(".opt-arrow").textContent = isOpen ? "▶" : "▼";
+        toggleEl.setAttribute("aria-expanded", String(!isOpen));
+    }
 
     function proceedToPay() {
         if (/Line\//i.test(navigator.userAgent)) {
