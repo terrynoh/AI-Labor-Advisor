@@ -179,7 +179,7 @@ def analyze_situation(form_data: dict) -> dict:
     except Exception as e:
         logger.error("analyze_situation 오류: %s", e, exc_info=True)
         analysis = {
-            "diagnosis": "ไม่สามารถวิเคราะห์ได้ในขณะนี้ กรุณาลองใหม่อีกครั้ง",
+            "diagnosis": "",
             "rights": [],
             "can_claim": [],
             "legal_basis": "",

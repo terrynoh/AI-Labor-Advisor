@@ -25,3 +25,4 @@ omise>=0.12.0
 flask-limiter>=3.5.0
 
 # Note: LibreOffice is required for PDF conversion (installed via Dockerfile)
+python-dotenv
