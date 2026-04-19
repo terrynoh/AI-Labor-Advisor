@@ -1074,7 +1074,21 @@
         if (btn) btn.innerHTML = `📦 เริ่มเตรียมแพ็กเกจเอกสาร — <span style="font-size:1.3em;color:#FFD700;font-weight:900">${PACKAGE_PRICE} ฿</span>`;
     }
 
+    (function() {
+        if (!/Line\//i.test(navigator.userAgent)) return;
+        const banner = document.createElement("div");
+        banner.id = "line-header-banner";
+        banner.style.cssText = "background:#FFF7ED;border-bottom:2px solid #F97316;padding:8px 18px;font-size:12.5px;color:#9A3412;display:flex;align-items:center;gap:8px;line-height:1.5;flex-shrink:0;";
+        banner.innerHTML = "<span style='font-size:16px'>⚠️</span><span>เปิดอยู่ใน <strong>LINE Browser</strong> — การดาวน์โหลดเอกสารอาจไม่ทำงาน กรุณาเปิดใหม่ใน Chrome / Safari</span>";
+        const header = document.querySelector(".header");
+        if (header && header.parentNode) header.parentNode.insertBefore(banner, header.nextSibling);
+    })();
+
     function proceedToPay() {
+        if (/Line\//i.test(navigator.userAgent)) {
+            const ok = confirm("คุณกำลังใช้ LINE Browser\n\nการดาวน์โหลดเอกสารอาจไม่ทำงาน\nแนะนำให้เปิดใหม่ใน Chrome หรือ Safari\n\nต้องการดำเนินการต่อหรือไม่?");
+            if (!ok) return;
+        }
         const publicKey = document.querySelector('meta[name="omise-public-key"]').content;
         if (!publicKey) { alert("ไม่พบการตั้งค่าการชำระเงิน กรุณาติดต่อเราครับ"); return; }
         OmiseCard.configure({ publicKey });
